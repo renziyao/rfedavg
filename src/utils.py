@@ -1,4 +1,6 @@
 import torch
+import torch.nn as nn
+
 
 def test_acc(net, testset, gpu):
     testloader = torch.utils.data.DataLoader(testset, batch_size=16)
@@ -14,6 +16,22 @@ def test_acc(net, testset, gpu):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     return correct / total
+
+def send_params(center_model, client_model):
+    center_model_params = center_model.state_dict()
+    for (name, params) in client_model.named_parameters():
+        params.data = center_model_params[name].clone().detach()
+    return
+
+def aggregate_params(center_model, client_models):
+    n = len(client_models)
+    for (name, params) in center_model.named_parameters():
+        params.data = torch.zeros_like(params.data)
+        for i, client_model in enumerate(client_models):
+            params.data += (1 / n) * \
+                client_model.state_dict()[name]
+    center_model.zero_grad()
+    return
 
 class ForeverDataIterator:
     """A data iterator that will never stop producing data"""
@@ -32,3 +50,15 @@ class ForeverDataIterator:
 
     def __len__(self):
         return len(self.data_loader)
+
+class LinearMMD(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+        X_avg = torch.sum(X, dim=0) / X.shape[0]
+        Y_avg = torch.sum(Y, dim=0) / Y.shape[0]
+        dis = torch.norm(X_avg - Y_avg) ** 2
+        return dis
+
