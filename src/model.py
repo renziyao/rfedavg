@@ -29,6 +29,24 @@ class LeNet(nn.Module):
             num_features *= s
         return num_features
 
+class FedAvgCNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 32, 5)
+        self.conv2 = nn.Conv2d(32, 64, 5)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 10)
+
+    def forward(self, x):
+        out = F.relu(self.conv1(x))
+        out = F.max_pool2d(out, 2)
+        out = F.relu(self.conv2(out))
+        out = F.max_pool2d(out, 2)
+        out = out.view(out.size(0), -1)
+        out = F.relu(self.fc1(out))
+        out = self.fc2(out)
+        return out
+
 class AlexNet(nn.Module):
     def __init__(self):
         super().__init__()
