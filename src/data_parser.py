@@ -22,8 +22,10 @@ def parse(fn):
 def parse_and_plot(flist):
     for f in flist:
         _, tmp = parse(f)
-        plt.plot(tmp, label=f)
+        plt.plot(tmp, label=input('label for %s: ' % f))
     plt.legend()
+    plt.ylim(0.8, 1.0)
+    plt.title(input('plot title: '))
     plt.show()
 
 def plot_folder(rootdir):

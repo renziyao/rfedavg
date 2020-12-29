@@ -9,8 +9,8 @@ import random
 import numpy as np
 
 def get_mnist_train_niid(root_dir, NUM_USER=50):
-    if NUM_USER % 5 != 0: raise Exception("NUM_USER must be 5 * x")
-    SPLIT_DIGIT = NUM_USER * 2 // 10
+    if NUM_USER % 10 != 0: raise Exception("NUM_USER must be 5 * x")
+    SPLIT_DIGIT = NUM_USER * 1 // 10
 
     trainset = torchvision.datasets.MNIST(
         root=root_dir, 
@@ -45,10 +45,10 @@ def get_mnist_train_niid(root_dir, NUM_USER=50):
         available_digits = [
             i for i in range(10) if len(trainset_digits_split[i]) > 0
         ]
-        if len(available_digits) >= 2:
+        if len(available_digits) >= 1:
             idx = random.sample(
                 available_digits, 
-                2, 
+                1, 
             )
         else:
             idx = [available_digits[0], available_digits[0]]

@@ -44,8 +44,8 @@ class FedAvgCNN(nn.Module):
         out = F.max_pool2d(out, 2)
         out = out.view(out.size(0), -1)
         out = F.relu(self.fc1(out))
-        out = self.fc2(out)
-        return out
+        pred = self.fc2(out)
+        return pred, out
 
 class AlexNet(nn.Module):
     def __init__(self):

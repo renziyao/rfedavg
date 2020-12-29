@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--totalepoch', 
         type=int, 
-        default=500, 
+        default=1000, 
         help='total epoch',
     )
     parser.add_argument(

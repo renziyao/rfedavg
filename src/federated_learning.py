@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
-import dalib.adaptation.dan
-import dalib.modules.kernels
 import random
 from src.model import *
 from src.dataloader import *
@@ -13,14 +11,14 @@ def main(params):
     device = params['device']
 
     # generate center model
-    center_model = LeNet()
+    center_model = FedAvgCNN()
     center_model.to(device)
     center_model.train()
 
     # generate client model and datasets
     n_clients = params['n_clients']
     client_ids = list(range(n_clients))
-    client_models = [LeNet() for i in client_ids]
+    client_models = [FedAvgCNN() for i in client_ids]
     for model in client_models:
         model.to(device)
         model.train()
