@@ -1,13 +1,13 @@
 General:
-  trainer: FedProx
+  trainer: FedTL
   model: FedAvgCNN
-  dataset: MNIST.non_iid_2
+  dataset: MNIST.non_iid_1
 
 Trainer: 
   C: 1.0
-  E: 5
+  E: 1
   total_epoch: 2000
-  lambda: 0.1
+  lambda: 0.01
   lambda_decay: 1.0
   n_clients: 10
   test_interval: 1

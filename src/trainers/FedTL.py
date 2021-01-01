@@ -95,13 +95,12 @@ class Server(BaseServer):
                 client.clone_model(self.center)
                 f_t.append(client.get_features())
             
-            # set avg features
+            # calc avg features
             f_t = (sum(f_t) / len(f_t)).detach()
-            for client in clients:
-                client.set_features(f_t)
 
             # for each client in choose_clients
             for client in clients:
+                client.set_features(f_t)
                 # local train
                 client.local_train()
             

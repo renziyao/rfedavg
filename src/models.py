@@ -46,7 +46,7 @@ class FedAvgCNN(nn.Module):
         out = F.relu(self.fc1(out))
         pred = self.fc2(out)
         if features: return pred, out
-        else: return out
+        else: return pred
 
 class Cifar10CNN(nn.Module):
     def __init__(self):
@@ -65,4 +65,4 @@ class Cifar10CNN(nn.Module):
         out = F.relu(self.fc1(out))
         pred = self.fc2(out)
         if features: return pred, out
-        else: return out
+        else: return pred
