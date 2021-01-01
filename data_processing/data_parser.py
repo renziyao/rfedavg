@@ -22,9 +22,11 @@ def parse(fn):
 def parse_and_plot(flist):
     for f in flist:
         _, tmp = parse(f)
-        plt.plot(tmp, label=input('label for %s: ' % f))
+        label = input('label for %s: ' % f)
+        if label == '': label = f
+        plt.plot(tmp, label=label)
     plt.legend()
-    plt.ylim(0.8, 1.0)
+    plt.ylim(0.0, 1.0)
     plt.title(input('plot title: '))
     plt.show()
 
@@ -36,7 +38,7 @@ def plot_folder(rootdir):
         path = os.path.join(rootdir,list[i])
         if os.path.isfile(path):
             flist.append(path)
-    parse_and_plot(flist)
+    parse_and_plot(sorted(flist))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

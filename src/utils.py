@@ -1,37 +1,6 @@
 import torch
 import torch.nn as nn
-
-
-def test_acc(net, testset, gpu):
-    testloader = torch.utils.data.DataLoader(testset, batch_size=16)
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            images = images.to(gpu)
-            labels = labels.to(gpu)
-            outputs, _ = net(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    return correct / total
-
-def send_params(center_model, client_model):
-    center_model_params = center_model.state_dict()
-    for (name, params) in client_model.named_parameters():
-        params.data = center_model_params[name].clone().detach()
-    return
-
-def aggregate_params(center_model, client_models):
-    n = len(client_models)
-    for (name, params) in center_model.named_parameters():
-        params.data = torch.zeros_like(params.data)
-        for i, client_model in enumerate(client_models):
-            params.data += (1 / n) * \
-                client_model.state_dict()[name]
-    center_model.zero_grad()
-    return
+import yaml
 
 class ForeverDataIterator:
     """A data iterator that will never stop producing data"""
@@ -62,3 +31,12 @@ class LinearMMD(nn.Module):
         dis = torch.norm(X_avg - Y_avg) ** 2
         return dis
 
+def read_options():
+    with open('config.yml', 'r') as f:
+        params = yaml.load(f.read(), Loader=yaml.CLoader)
+    if 'T' not in params['Trainer']:
+        params['Trainer']['T'] = params['Trainer']['total_epoch'] // params['Trainer']['E']
+    return params
+
+def print_params(params):
+    print(yaml.dump(params, Dumper=yaml.CDumper))

@@ -1,0 +1,21 @@
+General:
+  trainer: FedProx
+  model: FedAvgCNN
+  dataset: MNIST.non_iid_2
+
+Trainer: 
+  C: 1.0
+  E: 5
+  total_epoch: 2000
+  lambda: 0.1
+  lambda_decay: 1.0
+  n_clients: 10
+  test_interval: 1
+  device: cpu
+  batch_size: 100
+  optimizer:
+    lr: 0.01
+    momentum: 0.9
+    weight_decay: 0.0
+    lr_decay: 0.98
+
