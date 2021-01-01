@@ -20,7 +20,7 @@ class LeNet(nn.Module):
         x = F.relu(self.fc2(x))
         pred = self.fc3(x)
         if features: return pred, x
-        else: return x
+        else: return pred
 
     def num_flat_features(self, x):
         size = x.size()[1:]
