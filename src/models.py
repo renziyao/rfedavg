@@ -4,57 +4,31 @@ import torch.nn.functional as F
 
 
 class LeNet(nn.Module):
-    def __init__(self):
+    def __init__(self, input_shape, cls_num=10):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 6, (5, 5), padding=2)
+        self.conv1 = nn.Conv2d(input_shape[0], 6, (5, 5), padding=2)
         self.conv2 = nn.Conv2d(6, 16, (5, 5))
-        self.fc1 = nn.Linear(16*5*5, 120)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, cls_num)
 
     def forward(self, x, features=False):
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
         x = F.max_pool2d(F.relu(self.conv2(x)), (2, 2))
-        x = x.view(-1, self.num_flat_features(x))
+        x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         pred = self.fc3(x)
         if features: return pred, x
         else: return pred
 
-    def num_flat_features(self, x):
-        size = x.size()[1:]
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
-
 class FedAvgCNN(nn.Module):
-    def __init__(self):
+    def __init__(self, input_shape, cls_num=10):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 32, 5)
+        self.conv1 = nn.Conv2d(input_shape[0], 32, 5)
         self.conv2 = nn.Conv2d(32, 64, 5)
         self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 10)
-
-    def forward(self, x, features=False):
-        out = F.relu(self.conv1(x))
-        out = F.max_pool2d(out, 2)
-        out = F.relu(self.conv2(out))
-        out = F.max_pool2d(out, 2)
-        out = out.view(out.size(0), -1)
-        out = F.relu(self.fc1(out))
-        pred = self.fc2(out)
-        if features: return pred, out
-        else: return pred
-
-class Cifar10CNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 32, 5)
-        self.conv2 = nn.Conv2d(32, 64, 5)
-        self.fc1 = nn.Linear(1600, 512)
-        self.fc2 = nn.Linear(512, 10)
+        self.fc2 = nn.Linear(512, cls_num)
 
     def forward(self, x, features=False):
         out = F.relu(self.conv1(x))

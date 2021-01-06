@@ -25,6 +25,7 @@ class Client(BaseClient):
         self.meters = {
             'classifier_loss': AvgMeter(), 
             'mmd_loss': AvgMeter(),
+            'loss': AvgMeter(),
         }
     
     def local_train(self):
@@ -46,11 +47,13 @@ class Client(BaseClient):
                 self.optimizer.step()
                 self.meters['classifier_loss'].append(classifier_loss.item())
                 self.meters['mmd_loss'].append(mmd_loss.item())
+                self.meters['loss'].append(loss.item())
                 batch_count += 1
-        print('Client %d, classifier_loss: %.5f, mmd_loss: %.5f, acc: %.5f' % (
+        print('Client %d, classifier_loss: %.5f, mmd_loss: %.5f, loss: %.5f, acc: %.5f' % (
             self.id, 
             self.meters['classifier_loss'].avg(-batch_count),
             self.meters['mmd_loss'].avg(-batch_count),
+            self.meters['loss'].avg(-batch_count),
             self.test_accuracy(),
         ), flush=True)
         self.optimizer.param_groups[0]['lr'] *= self.params['Trainer']['optimizer']['lr_decay']

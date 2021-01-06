@@ -14,8 +14,9 @@ def non_iid_1(params):
     split_digit = NUM_USER // 10
 
     transform = transforms.Compose([
+        transforms.RandomCrop((28, 28)), 
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
 
@@ -80,8 +81,9 @@ def non_iid_2(params):
     split_digit = NUM_USER * 2 // 10
 
     transform = transforms.Compose([
+        transforms.RandomCrop((28, 28)), 
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
     train_dataset = torchvision.datasets.CIFAR10(

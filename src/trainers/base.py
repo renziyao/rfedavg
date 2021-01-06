@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import random
 import importlib
@@ -30,6 +29,7 @@ class BaseClient():
         self.trainset = trainset
         self.testset = testset
         self.id = id
+        input_shape = None
         if trainset != None:
             self.trainloader = torch.utils.data.DataLoader(
                 trainset, 
@@ -37,6 +37,7 @@ class BaseClient():
                 drop_last=True, 
                 shuffle=True,
             )
+            input_shape = trainset[0][0].shape
         if testset != None:
             self.testloader = torch.utils.data.DataLoader(
                 testset, 
@@ -44,15 +45,16 @@ class BaseClient():
                 drop_last=False, 
                 shuffle=True,
             )
+            input_shape = testset[0][0].shape
         self.E = params['Trainer']['E']
         self.device = torch.device(params['Trainer']['device'])
         models = importlib.import_module('src.models')
-        self.model = eval('models.%s' % params['General']['model'])()
+        self.model = eval('models.%s' % params['General']['model'])(input_shape)
         self.model = self.model.to(self.device)
     
-    def train():
+    def local_train(self):
         raise NotImplementedError()
-
+    
     def clone_model(self, target):
         target_params = target.model.state_dict()
         for (name, params) in self.model.named_parameters():
