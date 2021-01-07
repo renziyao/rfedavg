@@ -12,7 +12,6 @@ class Client(BaseClient):
     def __init__(self, id, params, trainset, testset):
         super().__init__(id, params, trainset, testset)
         self.classifier_criterion = nn.CrossEntropyLoss()
-        self.mmd_criterion = LinearMMD()
         self.optimizer = optim.SGD(
             [
                 {'params': self.model.parameters()},
@@ -25,9 +24,16 @@ class Client(BaseClient):
         self.meters = {
             'classifier_loss': AvgMeter(), 
         }
+        self.c = None
+        self.c_i = torch.zeros_like(self.model.parameters_to_tensor())
+        self.c_i_plus = None
+        self.delta_c = None
+        self.delta_x = None
     
     def local_train(self):
         batch_count = 0
+        x = self.model.parameters_to_tensor().detach().clone()
+        eta = self.optimizer.param_groups[0]['lr']
         for epoch in range(self.E):
             for i, data in enumerate(self.trainloader):
                 self.optimizer.zero_grad()
@@ -41,14 +47,24 @@ class Client(BaseClient):
                 )
                 classifier_loss.backward()
                 self.optimizer.step()
+                with torch.no_grad():
+                    p_tensor = self.model.parameters_to_tensor()
+                    p_tensor.add_(eta * (self.c_i - self.c))
                 self.meters['classifier_loss'].append(classifier_loss.item())
                 batch_count += 1
+        y = self.model.parameters_to_tensor()
+        with torch.no_grad():
+            self.c_i_plus = self.c_i - self.c + 1 / (batch_count * eta) * (x - y)
+            self.delta_y = y - x
+            self.delta_c = self.c_i_plus - self.c_i
+            self.c_i = self.c_i_plus
         print('Client %d, classifier_loss: %.5f, acc: %.5f' % (
             self.id, 
             self.meters['classifier_loss'].avg(-batch_count),
             self.test_accuracy(),
         ), flush=True)
         self.optimizer.param_groups[0]['lr'] *= self.params['Trainer']['optimizer']['lr_decay']
+
 
 class Server(BaseServer):
     def __init__(self, params):
@@ -64,14 +80,24 @@ class Server(BaseServer):
                     self.dataset_split[i]['test'],
                 )
             )
-    
+        self.c = torch.zeros_like(self.center.model.parameters_to_tensor())
+
     def aggregate_model(self, clients):
         n = len(clients)
-        p_tensors = []
-        for _, client in enumerate(clients):
-            p_tensors.append(client.model.parameters_to_tensor())
-        avg_tensor = sum(p_tensors) / n
-        self.center.model.tensor_to_parameters(avg_tensor)
+        N = len(self.clients)
+        eta_g = self.params['Trainer']['eta_g']
+        with torch.no_grad():
+            delta_x = []
+            delta_c = []
+            for _, client in enumerate(clients):
+                delta_x.append(client.delta_y)
+                delta_c.append(client.delta_c)
+            delta_x = 1 / n * sum(delta_x)
+            delta_c = 1 / n * sum(delta_c)
+            self.center.model.tensor_to_parameters(
+                self.center.model.parameters_to_tensor() + (delta_x * eta_g)
+            )
+            self.c.add_(n / N * delta_c)
         return
 
     def train(self):
@@ -81,12 +107,13 @@ class Server(BaseServer):
             time_begin = time.time()
             # random clients
             clients = self.sample_client()
-
-            # for each client in choose_clients
             for client in clients:
                 # send params
                 client.clone_model(self.center)
-                
+                client.c = self.c
+
+            # for each client in choose_clients
+            for client in clients:
                 # local train
                 client.local_train()
             

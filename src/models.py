@@ -1,10 +1,31 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
+class BaseModule(nn.Module):
+    def __init__(self):
+        super().__init__()
+        pass
 
-class LeNet(nn.Module):
-    def __init__(self, input_shape, cls_num=10):
+    def parameters_to_tensor(self):
+        params = []
+        for param in self.parameters():
+            params.append(param.view(-1))
+        params = torch.cat(params, 0)
+        return params
+    
+    def tensor_to_parameters(self, tensor):
+        p = 0
+        for param in self.parameters():
+            shape = param.shape
+            delta = 1
+            for item in shape: delta *= item
+            param.data = tensor[p: p + delta].view(shape).detach().clone()
+            p += delta
+
+class LeNet(BaseModule):
+    def __init__(self, input_shape=(1, 28, 28), cls_num=10):
         super().__init__()
         self.conv1 = nn.Conv2d(input_shape[0], 6, (5, 5), padding=2)
         self.conv2 = nn.Conv2d(6, 16, (5, 5))
@@ -22,8 +43,8 @@ class LeNet(nn.Module):
         if features: return pred, x
         else: return pred
 
-class FedAvgCNN(nn.Module):
-    def __init__(self, input_shape, cls_num=10):
+class FedAvgCNN(BaseModule):
+    def __init__(self, input_shape=(1, 28, 28), cls_num=10):
         super().__init__()
         self.conv1 = nn.Conv2d(input_shape[0], 32, 5)
         self.conv2 = nn.Conv2d(32, 64, 5)

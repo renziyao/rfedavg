@@ -1,6 +1,7 @@
 from src.trainers.base import BaseClient, BaseServer, AvgMeter
 
 import torch
+import IPython
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
@@ -57,10 +58,6 @@ class Client(BaseClient):
             self.test_accuracy(),
         ), flush=True)
         self.optimizer.param_groups[0]['lr'] *= self.params['Trainer']['optimizer']['lr_decay']
-        self.params['Trainer']['lambda'] *= self.params['Trainer']['lambda_decay']
-
-    def set_features(self, f_t):
-        self.f_t = f_t
 
     def get_features(self):
         inputs, _ = next(iter(self.trainloader))
@@ -83,6 +80,15 @@ class Server(BaseServer):
                     self.dataset_split[i]['test'],
                 )
             )
+    
+    def aggregate_model(self, clients):
+        n = len(clients)
+        p_tensors = []
+        for _, client in enumerate(clients):
+            p_tensors.append(client.model.parameters_to_tensor())
+        avg_tensor = sum(p_tensors) / n
+        self.center.model.tensor_to_parameters(avg_tensor)
+        return
 
     def train(self):
         for round in range(1, self.T + 1):
@@ -103,12 +109,12 @@ class Server(BaseServer):
 
             # for each client in choose_clients
             for client in clients:
-                client.set_features(f_t)
+                client.f_t = f_t
                 # local train
                 client.local_train()
             
             # aggregate params
-            self.center.aggregate_model(self.clients)
+            self.aggregate_model(self.clients)
 
             time_end = time.time()
 

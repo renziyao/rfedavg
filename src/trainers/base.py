@@ -56,19 +56,8 @@ class BaseClient():
         raise NotImplementedError()
     
     def clone_model(self, target):
-        target_params = target.model.state_dict()
-        for (name, params) in self.model.named_parameters():
-            params.data = target_params[name].clone().detach()
-        return
-
-    def aggregate_model(self, client_models):
-        n = len(client_models)
-        with torch.no_grad():
-            for (name, params) in self.model.named_parameters():
-                params.data = torch.zeros_like(params.data)
-                for i, client_model in enumerate(client_models):
-                    params.data += (1 / n) * \
-                        client_model.model.state_dict()[name]
+        p_tensor = target.model.parameters_to_tensor()
+        self.model.tensor_to_parameters(p_tensor)
         return
 
     def test_accuracy(self):
@@ -99,6 +88,7 @@ class BaseServer():
         dataset_split, testset = dataset_func(params)
         self.dataset_split = dataset_split
         self.testset = testset
+        self.params = params
         # load clients
 
     def train(self):
@@ -114,3 +104,6 @@ class BaseServer():
             self.clients, 
             self.n_clients_per_round,
         )
+    
+    def aggregate_model(self):
+        raise NotImplementedError()
