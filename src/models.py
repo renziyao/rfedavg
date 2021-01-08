@@ -6,7 +6,6 @@ import numpy as np
 class BaseModule(nn.Module):
     def __init__(self):
         super().__init__()
-        pass
 
     def parameters_to_tensor(self):
         params = []
@@ -25,8 +24,10 @@ class BaseModule(nn.Module):
             p += delta
 
 class LeNet(BaseModule):
-    def __init__(self, input_shape=(1, 28, 28), cls_num=10):
+    def __init__(self, params):
         super().__init__()
+        input_shape = params['Model']['input_shape']
+        cls_num = params['Model']['cls_num']
         self.conv1 = nn.Conv2d(input_shape[0], 6, (5, 5), padding=2)
         self.conv2 = nn.Conv2d(6, 16, (5, 5))
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
@@ -44,8 +45,10 @@ class LeNet(BaseModule):
         else: return pred
 
 class FedAvgCNN(BaseModule):
-    def __init__(self, input_shape=(1, 28, 28), cls_num=10):
+    def __init__(self, params):
         super().__init__()
+        input_shape = params['Model']['input_shape']
+        cls_num = params['Model']['cls_num']
         self.conv1 = nn.Conv2d(input_shape[0], 32, 5)
         self.conv2 = nn.Conv2d(32, 64, 5)
         self.fc1 = nn.Linear(1024, 512)
@@ -61,3 +64,18 @@ class FedAvgCNN(BaseModule):
         pred = self.fc2(out)
         if features: return pred, out
         else: return pred
+
+class LogisticRegression(BaseModule):
+    def __init__(self, params):
+        super().__init__()
+        input_shape = params['Model']['input_shape']
+        output_dim = params['Model']['cls_num']
+        input_dim = 1
+        for dim in input_shape: input_dim *= dim
+        self.linear = torch.nn.Linear(input_dim, output_dim)
+
+    def forward(self, x, features=False):
+        x = x.view(x.size(0), -1)
+        outputs = self.linear(x)
+        if features: return outputs, outputs
+        else: return outputs

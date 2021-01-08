@@ -46,12 +46,7 @@ class BaseClient():
         self.E = params['Trainer']['E']
         self.device = torch.device(params['Trainer']['device'])
         models = importlib.import_module('src.models')
-        input_shape = params['Model']['input_shape']
-        cls_num = params['Model']['cls_num']
-        self.model = eval('models.%s' % params['Model']['name'])(
-            input_shape,
-            cls_num,
-        )
+        self.model = eval('models.%s' % params['Model']['name'])(params)
         self.model = self.model.to(self.device)
     
     def local_train(self):

@@ -1,27 +1,26 @@
 Dataset:
-  name: MNIST
+  name: EMNIST
   divide: non_iid_percent
-  s: 1.0
-  shard_per_user: 2
+  s: 0.1
+  #shard_per_user: 2
 
 Model: 
-  name: FedAvgCNN
+  name: LogisticRegression
   input_shape: [1, 28, 28]
-  cls_num: 10
+  cls_num: 62
 
 Trainer: 
-  name: FedTL
+  name: SCAFFOLD
   seed: 0
-  C: 1.0
+  C: 0.2
   E: 1
-  T: 200
-  lambda: 0.00001
+  T: 100
+  #lambda: 0.00001
   eta_g: 1.0
-  lambda_decay: 1.0
-  n_clients: 10
+  n_clients: 100
   test_interval: 1
   device: cpu
-  batch_size: 100
+  batch_size: 1400
   optimizer:
     lr: 0.1
     momentum: 0.0
