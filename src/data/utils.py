@@ -134,8 +134,10 @@ def split_dataset_by_percent(train_dataset, test_dataset, s: float, num_user: in
     ])
     labels_count = len(train_dataset.class_to_idx)
     
-    trainset_niid_idx = sort_idx(trainset_niid_idx, trainset_targets, labels_count)
-    testset_niid_idx = sort_idx(testset_niid_idx, testset_targets, labels_count)
+    if len(trainset_niid_idx) > 0:
+        trainset_niid_idx = sort_idx(trainset_niid_idx, trainset_targets, labels_count)
+    if len(testset_niid_idx) > 0:
+        testset_niid_idx = sort_idx(testset_niid_idx, testset_targets, labels_count)
 
     p_train_iid = 0
     p_train_niid = 0
@@ -147,61 +149,82 @@ def split_dataset_by_percent(train_dataset, test_dataset, s: float, num_user: in
     delta_test_niid = testset_niid_idx.shape[0] // num_user
     dataset_split = []
     for userid in range(num_user):
-        train_X = torch.tensor(
-            np.concatenate([
+        train_X_lst = []
+        train_Y_lst = []
+        test_X_lst = []
+        test_Y_lst = []
+        if delta_train_iid > 0:
+            train_X_lst.append(
                 trainset_data[
                     trainset_iid_idx[
                         p_train_iid: p_train_iid + delta_train_iid
                     ]
-                ],
+                ]
+            )
+            train_Y_lst.append(
+                trainset_targets[
+                    trainset_iid_idx[
+                        p_train_iid: p_train_iid + delta_train_iid
+                    ]
+                ]
+            )
+        if delta_train_niid > 0:
+            train_X_lst.append(
                 trainset_data[
                     trainset_niid_idx[
                         p_train_niid: p_train_niid + delta_train_niid
                     ]
-                ],
-            ], axis=0)
+                ]
+            )
+            train_Y_lst.append(
+                trainset_targets[
+                    trainset_niid_idx[
+                        p_train_niid: p_train_niid + delta_train_niid
+                    ]
+                ]
+            )
+        if delta_test_iid > 0:
+            test_X_lst.append(
+                testset_data[
+                    testset_iid_idx[
+                        p_test_iid: p_test_iid + delta_test_iid
+                    ]
+                ]
+            )
+            test_Y_lst.append(
+                testset_targets[
+                    testset_iid_idx[
+                        p_test_iid: p_test_iid + delta_test_iid
+                    ]
+                ]
+            )
+        if delta_test_niid > 0:
+            test_X_lst.append(
+                testset_data[
+                    testset_niid_idx[
+                        p_test_niid: p_test_niid + delta_test_niid
+                    ]
+                ]
+            )
+            test_Y_lst.append(
+                testset_targets[
+                    testset_niid_idx[
+                        p_test_niid: p_test_niid + delta_test_niid
+                    ]
+                ]
+            )
+            
+        train_X = torch.tensor(
+            np.concatenate(train_X_lst, axis=0)
         )
         train_Y = torch.tensor(
-            np.concatenate([
-                trainset_targets[
-                    trainset_iid_idx[
-                        p_train_iid: p_train_iid + delta_train_iid
-                    ]
-                ],
-                trainset_targets[
-                    trainset_niid_idx[
-                        p_train_niid: p_train_niid + delta_train_niid
-                    ]
-                ],
-            ], axis=0)
+            np.concatenate(train_Y_lst, axis=0)
         )
         test_X = torch.tensor(
-            np.concatenate([
-                testset_data[
-                    testset_iid_idx[
-                        p_test_iid: p_test_iid + delta_test_iid
-                    ]
-                ],
-                testset_data[
-                    testset_niid_idx[
-                        p_test_niid: p_test_niid + delta_test_niid
-                    ]
-                ],
-            ], axis=0)
+            np.concatenate(test_X_lst, axis=0)
         )
         test_Y = torch.tensor(
-            np.concatenate([
-                testset_targets[
-                    testset_iid_idx[
-                        p_test_iid: p_test_iid + delta_test_iid
-                    ]
-                ],
-                testset_targets[
-                    testset_niid_idx[
-                        p_test_niid: p_test_niid + delta_test_niid
-                    ]
-                ],
-            ], axis=0)
+            np.concatenate(test_Y_lst, axis=0)
         )
         dataset_split.append(
             {

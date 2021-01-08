@@ -1,7 +1,6 @@
 from src.trainers.base import BaseClient, BaseServer, AvgMeter
 
 import torch
-import IPython
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
@@ -114,7 +113,7 @@ class Server(BaseServer):
                 client.local_train()
             
             # aggregate params
-            self.aggregate_model(self.clients)
+            self.aggregate_model(clients)
 
             time_end = time.time()
 

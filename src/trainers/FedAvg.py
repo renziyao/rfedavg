@@ -91,7 +91,7 @@ class Server(BaseServer):
                 client.local_train()
             
             # aggregate params
-            self.aggregate_model(self.clients)
+            self.aggregate_model(clients)
 
             time_end = time.time()
 
