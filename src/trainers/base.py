@@ -25,21 +25,21 @@ class AvgMeter():
 
 class BaseClient():
     def __init__(self, id, params, trainset, testset):
-        self.BATCH_SIZE = params['Trainer']['batch_size']
+        self.batch_size = params['Trainer']['batch_size']
         self.trainset = trainset
         self.testset = testset
         self.id = id
         if trainset != None:
             self.trainloader = torch.utils.data.DataLoader(
                 trainset, 
-                batch_size=self.BATCH_SIZE, 
+                batch_size=self.batch_size, 
                 drop_last=True, 
                 shuffle=True,
             )
         if testset != None:
             self.testloader = torch.utils.data.DataLoader(
                 testset, 
-                batch_size=self.BATCH_SIZE, 
+                batch_size=self.batch_size, 
                 drop_last=False, 
                 shuffle=True,
             )
@@ -73,8 +73,9 @@ class BaseClient():
 
 class BaseServer():
     def __init__(self, params):
-        self.T = params['Trainer']['T']
-        self.TEST_INTERVAL = params['Trainer']['test_interval']
+        self.device = torch.device(params['Trainer']['device'])
+        self.Round = params['Trainer']['Round']
+        self.test_interval = params['Trainer']['test_interval']
         self.n_clients = params['Trainer']['n_clients']
         self.n_clients_per_round = round(params['Trainer']['C'] * self.n_clients)
         dataset_name = params['Dataset']['name']
@@ -87,21 +88,15 @@ class BaseServer():
         self.dataset_split = dataset_split
         self.testset = testset
         self.params = params
-        # load clients
+
+    def aggregate_model(self):
+        raise NotImplementedError()
 
     def train(self):
-        selected_clients = self.select_client()
-        for client in selected_clients:
-            self.send_params(self.models[client])
-            self.local_train(self.model[client], self.dataloader[client])
-        self.aggregate_params(self.center_model, self.models)
-        return
+        raise NotImplementedError()
 
     def sample_client(self):
         return random.sample(
             self.clients, 
             self.n_clients_per_round,
         )
-    
-    def aggregate_model(self):
-        raise NotImplementedError()

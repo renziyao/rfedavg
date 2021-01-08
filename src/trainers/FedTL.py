@@ -89,7 +89,7 @@ class Server(BaseServer):
         return
 
     def train(self):
-        for round in range(1, self.T + 1):
+        for round in range(1, self.Round + 1):
             print('%sRound %d begin%s' % ('=' * 10, round, '=' * 10))
 
             time_begin = time.time()
@@ -122,7 +122,7 @@ class Server(BaseServer):
 
             time_end = time.time()
 
-            if round % self.TEST_INTERVAL == 0:
+            if round % self.test_interval == 0:
                 print('Summary, Accuracy: %.5f, Time: %.0fs' % (
                     self.center.test_accuracy(),
                     time_end - time_begin,
