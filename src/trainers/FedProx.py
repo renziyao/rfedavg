@@ -1,11 +1,9 @@
-from src.trainers.base import BaseClient, BaseServer, AvgMeter
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 import time
-import copy
+from src.trainers.base import *
 
 
 class Client(BaseClient):
@@ -55,12 +53,12 @@ class Client(BaseClient):
             self.meters['omega_loss'].avg(-batch_count),
             self.test_accuracy(),
         ), flush=True)
-        self.optimizer.param_groups[0]['lr'] *= self.params['Trainer']['optimizer']['lr_decay']
 
 
 class Server(BaseServer):
     def __init__(self, params):
         super().__init__(params)
+        self.learning_rate = self.params['Trainer']['optimizer']['lr']
         self.center = Client(0, params, None, self.testset)
         self.clients = []
         for i in range(self.n_clients):
@@ -90,16 +88,20 @@ class Server(BaseServer):
             # random clients
             clients = self.sample_client()
 
-            # for each client in choose_clients
             for client in clients:
                 # send params
                 client.clone_model(self.center)
+                for p in client.optimizer.param_groups:
+                    p['lr'] = self.learning_rate
                 
+            for client in clients:
                 # local train
                 client.local_train()
             
             # aggregate params
             self.aggregate_model(clients)
+
+            self.learning_rate *= self.params['Trainer']['optimizer']['lr_decay']
 
             time_end = time.time()
 

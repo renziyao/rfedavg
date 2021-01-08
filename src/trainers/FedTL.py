@@ -1,10 +1,9 @@
-from src.trainers.base import BaseClient, BaseServer, AvgMeter
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 import time
+from src.trainers.base import *
 from src.trainers.utils import LinearMMD
 
 
@@ -56,7 +55,6 @@ class Client(BaseClient):
             self.meters['loss'].avg(-batch_count),
             self.test_accuracy(),
         ), flush=True)
-        self.optimizer.param_groups[0]['lr'] *= self.params['Trainer']['optimizer']['lr_decay']
 
     def get_features(self):
         inputs, _ = next(iter(self.trainloader))
@@ -68,6 +66,7 @@ class Client(BaseClient):
 class Server(BaseServer):
     def __init__(self, params):
         super().__init__(params)
+        self.learning_rate = self.params['Trainer']['optimizer']['lr']
         self.center = Client(0, params, None, self.testset)
         self.clients = []
         for i in range(self.n_clients):
@@ -109,12 +108,17 @@ class Server(BaseServer):
 
             # for each client in choose_clients
             for i, client in enumerate(clients):
-                client.f_t = (f_t_sum - f_t[i]) / (f_t_len - 1)
-                # local train
-                client.local_train()
+                client.f_t = (f_t_sum / f_t_len).detach()
+                for p in client.optimizer.param_groups:
+                    p['lr'] = self.learning_rate
             
+            for client in clients:
+                client.local_train()
+
             # aggregate params
             self.aggregate_model(clients)
+
+            self.learning_rate *= self.params['Trainer']['optimizer']['lr_decay']
 
             time_end = time.time()
 
