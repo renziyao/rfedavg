@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 import time
-from src.trainers.utils import *
+from src.trainers.utils import LinearMMD
 
 
 class Client(BaseClient):
@@ -104,11 +104,12 @@ class Server(BaseServer):
                 f_t.append(client.get_features())
             
             # calc avg features
-            f_t = (sum(f_t) / len(f_t)).detach()
+            f_t_sum = sum(f_t)
+            f_t_len = len(f_t)
 
             # for each client in choose_clients
-            for client in clients:
-                client.f_t = f_t
+            for i, client in enumerate(clients):
+                client.f_t = (f_t_sum - f_t[i]) / (f_t_len - 1)
                 # local train
                 client.local_train()
             

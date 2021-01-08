@@ -6,14 +6,12 @@ import torch.optim as optim
 import torch.utils.data
 import time
 import copy
-from src.utils import *
 
 
 class Client(BaseClient):
     def __init__(self, id, params, trainset, testset):
         super().__init__(id, params, trainset, testset)
         self.classifier_criterion = nn.CrossEntropyLoss()
-        self.mmd_criterion = LinearMMD()
         self.optimizer = optim.SGD(
             [
                 {'params': self.model.parameters()},

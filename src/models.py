@@ -65,6 +65,23 @@ class FedAvgCNN(BaseModule):
         if features: return pred, out
         else: return pred
 
+class FedAvg2NN(BaseModule):
+    def __init__(self, params):
+        super().__init__()
+        input_shape = params['Model']['input_shape']
+        output_dim = params['Model']['cls_num']
+        input_dim = 1
+        for dim in input_shape: input_dim *= dim
+        self.fc1 = nn.Linear(input_dim, 200)
+        self.fc2 = nn.Linear(200, output_dim)
+
+    def forward(self, x, features=False):
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        pred = self.fc2(x)
+        if features: return pred, x
+        else: return pred
+
 class LogisticRegression(BaseModule):
     def __init__(self, params):
         super().__init__()
