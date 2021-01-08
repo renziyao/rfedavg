@@ -11,6 +11,7 @@ Model:
 
 Trainer: 
   name: FedTL
+  seed: 0
   C: 1.0
   E: 1
   T: 200

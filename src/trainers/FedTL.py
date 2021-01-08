@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 import time
-from src.utils import *
+from src.trainers.utils import *
 
 
 class Client(BaseClient):
