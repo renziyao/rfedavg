@@ -27,7 +27,7 @@ class Client(BaseClient):
         }
     
     def local_train(self):
-        self.set_omega()
+        self.omega = self.model.parameters_to_tensor().clone().detach()
         batch_count = 0
         for epoch in range(self.E):
             for i, data in enumerate(self.trainloader):
@@ -40,9 +40,9 @@ class Client(BaseClient):
                     outputs,
                     labels,
                 )
-                omega_loss = 0.0
-                for (name, params) in self.model.named_parameters():
-                    omega_loss += torch.norm(params.data - self.omega[name]) ** 2
+                omega_loss = torch.norm(
+                    self.model.parameters_to_tensor() - self.omega
+                ) ** 2
                 loss = classifier_loss + omega_loss * self.params['Trainer']['lambda']
                 loss.backward()
                 self.optimizer.step()
@@ -56,10 +56,6 @@ class Client(BaseClient):
             self.test_accuracy(),
         ), flush=True)
         self.optimizer.param_groups[0]['lr'] *= self.params['Trainer']['optimizer']['lr_decay']
-
-    def set_omega(self):
-        self.omega = copy.deepcopy(self.model.state_dict())
-        return
 
 
 class Server(BaseServer):

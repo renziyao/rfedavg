@@ -10,12 +10,12 @@ Model:
   cls_num: 10
 
 Trainer: 
-  name: FedAvg
+  name: FedProx
   seed: 0
   C: 1.0
   E: 1
   T: 200
-  lambda: 0.00001
+  lambda: 0.5
   #eta_g: 1.0
   n_clients: 10
   test_interval: 1
