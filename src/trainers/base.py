@@ -29,7 +29,6 @@ class BaseClient():
         self.trainset = trainset
         self.testset = testset
         self.id = id
-        input_shape = None
         if trainset != None:
             self.trainloader = torch.utils.data.DataLoader(
                 trainset, 
@@ -37,7 +36,6 @@ class BaseClient():
                 drop_last=True, 
                 shuffle=True,
             )
-            input_shape = trainset[0][0].shape
         if testset != None:
             self.testloader = torch.utils.data.DataLoader(
                 testset, 
@@ -45,11 +43,15 @@ class BaseClient():
                 drop_last=False, 
                 shuffle=True,
             )
-            input_shape = testset[0][0].shape
         self.E = params['Trainer']['E']
         self.device = torch.device(params['Trainer']['device'])
         models = importlib.import_module('src.models')
-        self.model = eval('models.%s' % params['General']['model'])(input_shape)
+        input_shape = params['Model']['input_shape']
+        cls_num = params['Model']['cls_num']
+        self.model = eval('models.%s' % params['Model']['name'])(
+            input_shape,
+            cls_num,
+        )
         self.model = self.model.to(self.device)
     
     def local_train(self):
@@ -80,7 +82,8 @@ class BaseServer():
         self.TEST_INTERVAL = params['Trainer']['test_interval']
         self.n_clients = params['Trainer']['n_clients']
         self.n_clients_per_round = round(params['Trainer']['C'] * self.n_clients)
-        dataset_name, func_name = params['General']['dataset'].split('.')
+        dataset_name = params['Dataset']['name']
+        func_name = params['Dataset']['divide']
         dataset_module = importlib.import_module(
             'src.data.%s' % dataset_name
         )

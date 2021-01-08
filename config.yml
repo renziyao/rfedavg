@@ -1,12 +1,19 @@
-General:
-  trainer: FedTL
-  model: FedAvgCNN
-  dataset: CIFAR10.non_iid_1
+Dataset:
+  name: EMNIST
+  divide: non_iid_shard
+  s: 0.2
+  shard_per_user: 2
+
+Model: 
+  name: FedAvgCNN
+  input_shape: [1, 28, 28]
+  cls_num: 62
 
 Trainer: 
+  name: FedTL
   C: 1.0
   E: 1
-  total_epoch: 2000
+  T: 200
   lambda: 0.00001
   eta_g: 1.0
   lambda_decay: 1.0

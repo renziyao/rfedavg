@@ -5,22 +5,23 @@ from src.data.utils import *
 root_dir = './data/'
 
 transform = transforms.Compose([
-    transforms.Resize((28, 28)), 
     transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    transforms.Normalize((0.5,), (0.5,))
 ])
 
-train_dataset = torchvision.datasets.CIFAR10(
+train_dataset = torchvision.datasets.EMNIST(
     root_dir, 
     train=True, 
     transform=transform, 
-    download=True
+    split='byclass',
+    download=True,
 )
-test_dataset = torchvision.datasets.CIFAR10(
+test_dataset = torchvision.datasets.EMNIST(
     root_dir, 
     train=False, 
     transform=transform, 
-    download=True
+    split='byclass',
+    download=True,
 )
 
 def non_iid_shard(params):
