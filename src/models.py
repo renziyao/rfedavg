@@ -93,6 +93,7 @@ class LogisticRegression(BaseModule):
 
     def forward(self, x, features=False):
         x = x.view(x.size(0), -1)
-        outputs = self.linear(x)
-        if features: return outputs, outputs
-        else: return outputs
+        x = self.linear(x)
+        x = F.sigmoid(x)
+        if features: return x, x
+        else: return x
