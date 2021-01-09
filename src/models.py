@@ -73,12 +73,14 @@ class FedAvg2NN(BaseModule):
         input_dim = 1
         for dim in input_shape: input_dim *= dim
         self.fc1 = nn.Linear(input_dim, 200)
-        self.fc2 = nn.Linear(200, output_dim)
+        self.fc2 = nn.Linear(200, 200)
+        self.fc3 = nn.Linear(200, output_dim)
 
     def forward(self, x, features=False):
         x = x.view(x.size(0), -1)
-        x = self.fc1(x)
-        pred = self.fc2(x)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        pred = self.fc3(x)
         if features: return pred, x
         else: return pred
 
@@ -93,7 +95,6 @@ class LogisticRegression(BaseModule):
 
     def forward(self, x, features=False):
         x = x.view(x.size(0), -1)
-        x = self.linear(x)
-        x = F.sigmoid(x)
+        x = F.sigmoid(self.linear(x))
         if features: return x, x
         else: return x
