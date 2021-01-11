@@ -1,8 +1,8 @@
 Dataset:
   name: MNIST
-  divide: non_iid_shard
-  #s: 0.1
-  shard_per_user: 2
+  divide: non_iid_percent
+  s: 1.0
+  #shard_per_user: 2
 
 Model: 
   name: FedAvg2NN
@@ -10,12 +10,15 @@ Model:
   cls_num: 10
 
 Trainer: 
-  name: FedTL
+  name: qFedAvg
   seed: 0
   C: 1.0
   E: 1
+  # qfed
+  L: 1.0
+  q: 0.1
   Round: 200
-  lambda: 0.0001
+  #lambda: 0.0001
   #eta_g: 1.0
   n_clients: 10
   test_interval: 1
