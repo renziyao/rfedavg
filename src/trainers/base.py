@@ -88,6 +88,7 @@ class BaseServer():
         self.dataset_split = dataset_split
         self.testset = testset
         self.params = params
+        self.acc_meter = AvgMeter()
 
     def aggregate_model(self):
         raise NotImplementedError()

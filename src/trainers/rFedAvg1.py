@@ -4,12 +4,14 @@ import torch.optim as optim
 import torch.utils.data
 import time
 from src.trainers.base import *
+from src.trainers.utils import LinearMMD
 
 
 class Client(BaseClient):
     def __init__(self, id, params, trainset, testset):
         super().__init__(id, params, trainset, testset)
         self.classifier_criterion = nn.CrossEntropyLoss()
+        self.mmd_criterion = LinearMMD()
         self.optimizer = optim.SGD(
             [
                 {'params': self.model.parameters()},
@@ -21,6 +23,8 @@ class Client(BaseClient):
         self.params = params
         self.meters = {
             'classifier_loss': AvgMeter(), 
+            'mmd_loss': AvgMeter(),
+            'loss': AvgMeter(),
         }
     
     def local_train(self):
@@ -31,20 +35,34 @@ class Client(BaseClient):
                 inputs, labels = data
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
-                outputs = self.model(inputs)
+                outputs, f_s = self.model(inputs, features=True)
                 classifier_loss = self.classifier_criterion(
                     outputs,
                     labels,
                 )
-                classifier_loss.backward()
+                mmd_loss = sum([self.mmd_criterion(f_s, f_t) for f_t in self.f_t])
+                loss = classifier_loss + mmd_loss * self.params['Trainer']['lambda']
+                loss.backward()
                 self.optimizer.step()
                 self.meters['classifier_loss'].append(classifier_loss.item())
+                self.meters['mmd_loss'].append(mmd_loss.item())
+                self.meters['loss'].append(loss.item())
                 batch_count += 1
-        print('Client %d, classifier_loss: %.5f, acc: %.5f' % (
+        print('Client %d, classifier_loss: %.5f, mmd_loss: %.5f, loss: %.5f, acc: %.5f' % (
             self.id, 
             self.meters['classifier_loss'].avg(-batch_count),
+            self.meters['mmd_loss'].avg(-batch_count),
+            self.meters['loss'].avg(-batch_count),
             self.test_accuracy(),
         ), flush=True)
+        self.f_s = self.get_features()
+
+    def get_features(self):
+        inputs, _ = next(iter(self.trainloader))
+        inputs = inputs.to(self.device)
+        _, f_s = self.model(inputs, features=True)
+        return f_s
+
 
 class Server(BaseServer):
     def __init__(self, params):
@@ -65,30 +83,36 @@ class Server(BaseServer):
     def aggregate_model(self, clients):
         n = len(clients)
         p_tensors = []
+        self.f_t.clear()
         for _, client in enumerate(clients):
             p_tensors.append(client.model.parameters_to_tensor())
+            self.f_t.append(client.f_s.detach())
         avg_tensor = sum(p_tensors) / n
         self.center.model.tensor_to_parameters(avg_tensor)
         return
 
     def train(self):
+        # initialize f_t
+        self.f_t = [client.get_features().detach() for client in self.clients]
         for round in range(1, self.Round + 1):
             print('%sRound %d begin%s' % ('=' * 10, round, '=' * 10))
 
             time_begin = time.time()
-            # random clients
-            clients = self.sample_client()
-
-            for client in clients:
-                # send params
-                client.clone_model(self.center)
+            # only support C=1
+            clients = self.clients
+            
+            # for each client in choose_clients
+            for i, client in enumerate(clients):
+                client.f_t = [item for j, item in enumerate(self.f_t) if i != j]
                 for p in client.optimizer.param_groups:
                     p['lr'] = self.learning_rate
             
             for client in clients:
-                # local train
+                client.clone_model(self.center)
                 client.local_train()
             
+            self.f_t.clear()
+
             # aggregate params
             self.aggregate_model(clients)
 

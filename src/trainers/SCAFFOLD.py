@@ -1,3 +1,4 @@
+from os import access
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -125,8 +126,11 @@ class Server(BaseServer):
             time_end = time.time()
 
             if round % self.test_interval == 0:
+                acc = self.center.test_accuracy()
                 print('Summary, Accuracy: %.5f, Time: %.0fs' % (
-                    self.center.test_accuracy(),
+                    acc,
                     time_end - time_begin,
                 ))
+                self.acc_meter.append(acc)
             print('%sRound %d end%s' % ('=' * 10, round, '=' * 10))
+        print('Done, max acc: %.5f' % (self.acc_meter.max()))

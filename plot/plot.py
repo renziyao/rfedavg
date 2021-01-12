@@ -17,15 +17,26 @@ def parse(fn):
         return parse_acc(f)
 
 def parse_and_plot(flist):
+    data = []
+    plt.figure(figsize=(12, 9))
     for f in flist:
         _, tmp = parse(f)
-        label = input('label for %s: ' % f)
+        p = 0
+        for i, _ in enumerate(tmp):
+            if tmp[i] > 0.5:
+                p = i
+                break
+        print(f, max(tmp), p + 1)
+        label=''
+        #label = input('label for %s: ' % f)
         if label == '': label = f
-        plt.plot(tmp, label=label)
+        data.append([tmp, label])
+    for item in sorted(data, key=lambda x: x[1]):
+        plt.plot(item[0], label=item[1])
     plt.legend()
     plt.ylim(0.0, 1.0)
     plt.title(input('plot title: '))
-    plt.show()
+    plt.savefig('plot.pdf')
 
 def plot_folder(rootdir):
     list = os.listdir(rootdir)

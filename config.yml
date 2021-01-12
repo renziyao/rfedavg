@@ -1,8 +1,12 @@
 Dataset:
   name: MNIST
   divide: non_iid_percent
-  s: 1.0
-  #shard_per_user: 2
+  #####Divide Parameters#####
+  # non_iid_percent
+  s: 0.0
+  # non_iid_shard
+  # shard_per_user: 2
+  #####Divide Parameters#####
 
 Model: 
   name: FedAvg2NN
@@ -10,20 +14,25 @@ Model:
   cls_num: 10
 
 Trainer: 
-  name: qFedAvg
+  name: FedAvg
   seed: 0
   C: 1.0
   E: 1
-  # qfed
-  L: 1.0
-  q: 0.1
-  Round: 200
-  #lambda: 0.0001
-  #eta_g: 1.0
+  Round: 300
   n_clients: 10
   test_interval: 1
   device: cpu
   batch_size: 100
+  #####Trainer Parameters#####
+  # qfedavg
+  # L: 1.0
+  # q: 0.1
+  # rfedavg
+  lambda: 0.0001
+  # fedprox
+  # lambda: 0.5
+  #eta_g: 1.0
+  #####Trainer Parameters#####
   optimizer:
     lr: 0.1
     momentum: 0.0
