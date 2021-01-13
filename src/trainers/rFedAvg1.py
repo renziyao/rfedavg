@@ -41,6 +41,7 @@ class Client(BaseClient):
                     labels,
                 )
                 mmd_loss = sum([self.mmd_criterion(f_s, f_t) for f_t in self.f_t])
+                mmd_loss /= len(self.f_t)
                 loss = classifier_loss + mmd_loss * self.params['Trainer']['lambda']
                 loss.backward()
                 self.optimizer.step()
