@@ -8,7 +8,7 @@ FedAvg, FedProx, rFedAvg1, rFedAvg2, SCAFFOLD, qFedAvg
 
 MNIST: 60k, 1x28x28
 
-CIFAR10:60k, 3x32x32
+CIFAR10:60k, 3x32x32, resized 3x28x28
 
 EMNIST: 814k, 1x28x28
 
