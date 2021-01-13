@@ -111,8 +111,6 @@ class Server(BaseServer):
                 client.clone_model(self.center)
                 client.local_train()
             
-            self.f_t.clear()
-
             # aggregate params
             self.aggregate_model(clients)
 

@@ -15,10 +15,10 @@ def set_seed(seed):
 
 def read_options():
     with open('config.yml', 'r') as f:
-        params = yaml.load(f.read(), Loader=yaml.CLoader)
+        params = yaml.load(f.read(), Loader=yaml.Loader)
     if 'Round' not in params['Trainer']:
         params['Trainer']['Round'] = params['Trainer']['total_epoch'] // params['Trainer']['E']
     return params
 
 def print_params(params):
-    print(yaml.dump(params, Dumper=yaml.CDumper))
+    print(yaml.dump(params, Dumper=yaml.Dumper))
