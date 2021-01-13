@@ -1,3 +1,5 @@
+Output: './output.txt'
+
 Dataset:
   name: MNIST
   divide: non_iid_percent
@@ -28,14 +30,15 @@ Trainer:
   # L: 1.0
   # q: 0.1
   # rfedavg
-  lambda: 0.0001
+  # lambda: 0.0001
   # fedprox
   # lambda: 0.5
-  #eta_g: 1.0
+  # SCAFFOLD
+  # eta_g: 1.0
   #####Trainer Parameters#####
   optimizer:
     lr: 0.1
     momentum: 0.0
     weight_decay: 0.0
-    lr_decay: 0.992
+    lr_decay: 1.0
 

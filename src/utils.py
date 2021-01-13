@@ -4,7 +4,12 @@ import torch.cuda
 import torch.backends.cudnn
 import random
 import numpy as np
+import sys
 
+def redirect_stdout(fn):
+    f = open(fn, 'a')
+    sys.stdout = f
+    sys.stderr = f
 
 def set_seed(seed):
     torch.manual_seed(seed)
