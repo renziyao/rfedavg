@@ -27,7 +27,7 @@ class Client(BaseClient):
         self.c_i = torch.zeros_like(self.model.parameters_to_tensor())
         self.c_i_plus = None
         self.delta_c = None
-        self.delta_x = None
+        self.delta_y = None
     
     def local_train(self):
         batch_count = 0
@@ -57,6 +57,8 @@ class Client(BaseClient):
             self.delta_y = y - x
             self.delta_c = self.c_i_plus - self.c_i
             self.c_i = self.c_i_plus
+            del self.c
+            del self.c_i_plus
         print('Client %d, classifier_loss: %.5f, acc: %.5f' % (
             self.id, 
             self.meters['classifier_loss'].avg(-batch_count),
@@ -97,6 +99,9 @@ class Server(BaseServer):
                 self.center.model.parameters_to_tensor() + (delta_x * eta_g)
             )
             self.c.add_(n / N * delta_c)
+            for _, client in enumerate(clients):
+                del client.delta_y
+                del client.delta_c
         return
 
     def train(self):
