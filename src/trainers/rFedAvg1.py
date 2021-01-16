@@ -87,7 +87,6 @@ class Server(BaseServer):
         self.f_t.clear()
         for _, client in enumerate(clients):
             p_tensors.append(client.model.parameters_to_tensor())
-            self.f_t.append(client.f_s.detach())
         avg_tensor = sum(p_tensors) / n
         self.center.model.tensor_to_parameters(avg_tensor)
         return
@@ -100,7 +99,7 @@ class Server(BaseServer):
             # assign C < 1.0 is meaningless
             clients = self.sample_client()
             self.f_t = [client.get_features().detach() for client in clients]
-            
+
             # for each client in choose_clients
             for i, client in enumerate(clients):
                 client.f_t = [item for j, item in enumerate(self.f_t) if i != j]
