@@ -12,6 +12,8 @@ CIFAR10:60k, 3x32x32, resized 3x28x28
 
 EMNIST: 814k, 1x28x28
 
+Sent140: 40k
+
 #### divide
 
 non_iid_percent: SCAFFOLD中数据切分方式，s%的数据打乱后切分，1-s%的数据排序后切分
@@ -20,6 +22,17 @@ non_iid_shard: on fedavg non iid convergence切分方式，直接排序后切分
 
 #### model
 
-FedAvgCNN, LeNet, FedAvg2NN, LogisticRegression
+FedAvgCNN, LeNet, FedAvg2NN, LogisticRegression, LSTM
 
 参数：input_shape: [c, h, w], cls_num: 最后一层个数
+
+
+数据集下载
+
+https://www.kaggle.com/kazanova/sentiment140/download
+
+torchtext
+
+使用了torchtext试用版的新功能，需要安装nightly版本
+
+`pip install --pre torch torchtext -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html`
