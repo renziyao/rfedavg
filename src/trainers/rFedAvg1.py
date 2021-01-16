@@ -93,14 +93,13 @@ class Server(BaseServer):
         return
 
     def train(self):
-        # initialize f_t
-        self.f_t = [client.get_features().detach() for client in self.clients]
         for round in range(1, self.Round + 1):
             print('%sRound %d begin%s' % ('=' * 10, round, '=' * 10))
 
             time_begin = time.time()
-            # only support C=1
-            clients = self.clients
+            # assign C < 1.0 is meaningless
+            clients = self.sample_client()
+            self.f_t = [client.get_features().detach() for client in clients]
             
             # for each client in choose_clients
             for i, client in enumerate(clients):
