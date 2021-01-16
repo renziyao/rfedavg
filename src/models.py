@@ -98,3 +98,27 @@ class LogisticRegression(BaseModule):
         x = F.sigmoid(self.linear(x))
         if features: return x, x
         else: return x
+
+class LSTM(BaseModule):
+    def __init__(self, params):
+        super().__init__()
+        output_dim = params['Model']['cls_num']
+        self.embedding = nn.Embedding(3000, 300, padding_idx = 0)
+        self.embedding.weight.requires_grad = False
+        self.encoder = nn.LSTM(input_size=300, hidden_size=256, num_layers=2, batch_first=True)
+        self.fc = nn.Linear(256, output_dim)
+    
+    def last_timestep(self, unpacked, lengths):
+        idx = (lengths - 1).view(-1, 1).expand(unpacked.size(0), unpacked.size(2)).unsqueeze(1)
+        return unpacked.gather(1, idx).squeeze()
+    
+    def forward(self, text):
+        length = text[:, -1]
+        text = text[:, :-1]
+        embedded = self.embedding(text)
+        packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, batch_first=True, lengths=length)
+        packed_output, (hidden, cell) = self.encoder(packed_embedded)
+        output, output_lengths = nn.utils.rnn.pad_packed_sequence(packed_output, batch_first=True)
+        output = self.last_timestep(output, output_lengths)
+        output = self.fc(output)
+        return output

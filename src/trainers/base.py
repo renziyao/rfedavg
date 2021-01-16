@@ -1,6 +1,7 @@
 import torch
 import random
 import importlib
+from src.trainers.utils import nlp_collate_fn
 
 class AvgMeter():
     def __init__(self):
@@ -29,12 +30,19 @@ class BaseClient():
         self.trainset = trainset
         self.testset = testset
         self.id = id
+        collate_fn = None
+        dataset_type = 'Image'
+        if 'type' in params['Dataset'] and params['Dataset']['type'] == 'NLP':
+            dataset_type = 'NLP'
+        if dataset_type == 'NLP':
+            collate_fn = nlp_collate_fn
         if trainset != None:
             self.trainloader = torch.utils.data.DataLoader(
                 trainset, 
                 batch_size=self.batch_size, 
                 drop_last=True, 
                 shuffle=True,
+                collate_fn=collate_fn,
             )
         if testset != None:
             self.testloader = torch.utils.data.DataLoader(
@@ -42,11 +50,17 @@ class BaseClient():
                 batch_size=self.batch_size, 
                 drop_last=False, 
                 shuffle=True,
+                collate_fn=collate_fn,
             )
         self.E = params['Trainer']['E']
         self.device = torch.device(params['Trainer']['device'])
         models = importlib.import_module('src.models')
         self.model = eval('models.%s' % params['Model']['name'])(params)
+        if dataset_type == 'NLP':
+            if trainset != None:
+                self.model.embedding.weight.data.copy_(trainset.vocab.vectors)
+            elif testset != None:
+                self.model.embedding.weight.data.copy_(testset.vocab.vectors)
         self.model = self.model.to(self.device)
     
     def local_train(self):
@@ -58,6 +72,7 @@ class BaseClient():
         return
 
     def test_accuracy(self):
+        if self.testset == None: return -1
         correct = 0
         total = 0
         with torch.no_grad():

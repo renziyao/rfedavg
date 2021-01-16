@@ -1,17 +1,19 @@
-Output: './output.txt'
+#Output: './output.txt'
 
 Dataset:
   name: MNIST
   divide: non_iid_percent
+  # Notice: When choosing NLP dataset, type is needed
+  # type: NLP
   #####Divide Parameters#####
   # non_iid_percent
-  s: 0.0
+  s: 1.0
   # non_iid_shard
   # shard_per_user: 2
   #####Divide Parameters#####
 
 Model: 
-  name: FedAvg2NN
+  name: FedAvgCNN
   input_shape: [1, 28, 28]
   cls_num: 10
 
@@ -41,4 +43,3 @@ Trainer:
     momentum: 0.0
     weight_decay: 0.0
     lr_decay: 1.0
-
