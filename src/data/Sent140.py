@@ -1,8 +1,5 @@
 import pandas as pd
-import numpy as np
-import spacy
 import torch
-import torchtext
 from torchtext.vocab import Vocab, Counter
 from torchtext.data.utils import get_tokenizer
 from torchtext.experimental.functional import (
