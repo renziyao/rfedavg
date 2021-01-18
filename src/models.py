@@ -116,10 +116,10 @@ class LSTM(BaseModule):
         length = text[:, -1]
         text = text[:, :-1]
         embedded = self.embedding(text)
-        packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, batch_first=True, lengths=length)
+        packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, batch_first=True, lengths=length.cpu())
         packed_output, (hidden, cell) = self.encoder(packed_embedded)
-        output, output_lengths = nn.utils.rnn.pad_packed_sequence(packed_output, batch_first=True)
-        output = self.last_timestep(output, output_lengths)
+        output, _ = nn.utils.rnn.pad_packed_sequence(packed_output, batch_first=True)
+        output = self.last_timestep(output, length)
         pred = self.fc(output)
         if features: return pred, output
         else: return pred
