@@ -29,7 +29,7 @@ def get_vocab_counter(data, transforms):
 def non_iid_percent(params):
     s = params['Dataset']['s']
     num_user = params['Trainer']['n_clients']
-    pick_need = 10000
+    pick_need = 50000
     pick_sum = 0
     usernames = []
     for k, v in dict(df[4].value_counts()).items():
