@@ -15,7 +15,8 @@ from torchtext.experimental.datasets.text_classification import TextClassificati
 df = pd.read_csv(
     "./data/training.1600000.processed.noemoticon.csv", 
     engine="python", 
-    header=None
+    header=None,
+    encoding='ISO-8859-1',
 )
 df[0] = df[0].replace(to_replace=4, value=1)
 
@@ -43,7 +44,7 @@ def non_iid_percent(params):
 
     text_transform = sequential_transforms(
         str.lower, 
-        get_tokenizer("spacy"),
+        get_tokenizer("basic_english"),
     )
 
     counter = Counter(dict(
