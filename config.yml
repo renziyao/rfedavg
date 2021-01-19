@@ -7,9 +7,11 @@ Dataset:
   # type: NLP
   #####Divide Parameters#####
   # non_iid_percent
-  s: 1.0
+  # s: 1.0
   # non_iid_shard
   # shard_per_user: 2
+  # cross_device_iid / cross_device_niid / cross_silo
+  # user: 500
   #####Divide Parameters#####
 
 Model: 
