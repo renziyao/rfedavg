@@ -121,7 +121,6 @@ def cross_device_iid(params):
         split_train = df_train_iid[
             p_train_iid: p_train_iid + delta_train_iid
         ]
-        print(split_train)
         split_train = list(zip(split_train[0], split_train[5]))
         dataset_split.append(
             {
