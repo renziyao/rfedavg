@@ -137,11 +137,9 @@ def cross_device_iid(params):
 
 def cross_silo(params):
     num_user = params['Trainer']['n_clients']
-    dataset_user = params['Dataset']['user']
+    dataset_frac = params['Dataset']['frac']
     s = params['Dataset']['s']
-    usernames = list(dict(df[4].value_counts()))[:dataset_user]
-    df_small = df.loc[df[4].isin(usernames)]
-    df_small = df_small.sample(frac=1) # shuffle all the data
+    df_small = df.sample(frac=dataset_frac) # sample & shuffle
     df_train = df_small.iloc[:int(df_small.shape[0] * 0.9), :]
     df_test = df_small.iloc[int(df_small.shape[0] * 0.9):, :]
     text_transform = sequential_transforms(
