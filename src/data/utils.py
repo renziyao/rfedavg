@@ -1,4 +1,5 @@
 import torch
+import random
 import numpy as np
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import TensorDataset
@@ -7,6 +8,8 @@ from torch.utils.data import Subset
 def split_dataset_by_percent(train_dataset, test_dataset, s: float, num_user: int, func=(lambda x: x[1])):
     trainset_targets = [(i, func(item)) for i, item in enumerate(train_dataset)]
     testset_targets = [(i, func(item)) for i, item in enumerate(test_dataset)]
+    random.shuffle(trainset_targets)
+    random.shuffle(testset_targets)
     len_train_iid = round(s * len(train_dataset))
     len_test_iid = round(s * len(test_dataset))
     trainset_iid_idx = trainset_targets[:len_train_iid]
