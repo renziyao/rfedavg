@@ -1,5 +1,6 @@
 from torchtext.experimental.datasets.text_classification import AmazonReviewPolarity
 from src.data.utils import *
+import random
 
 root_dir = './data/'
 vectors_cache = './data/vector_cache/'
@@ -12,8 +13,15 @@ vocab.__init__(
     vectors='glove.6B.300d',
     vectors_cache=vectors_cache,
 )
-train_dataset = Subset(train_dataset, list(range(1000)))
-test_dataset = Subset(test_dataset, list(range(1000)))
+
+train_dataset = Subset(
+    train_dataset, 
+    random.sample(list(range(len(train_dataset))), 10000),
+)
+test_dataset = Subset(
+    test_dataset, 
+    random.sample(list(range(len(test_dataset))), 1000),
+)
 
 def non_iid_percent(params):
     num_user = params['Trainer']['n_clients']
