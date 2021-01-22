@@ -75,7 +75,13 @@ def cross_device_niid(params):
                 'test': None, 
             }
         )
-    return dataset_split, test_dataset
+    for item in dataset_split: item['vocab'] = vocab
+    testset_dict = {
+        'train': None,
+        'test': test_dataset,
+        'vocab': vocab,
+    }
+    return dataset_split, testset_dict
 
 def cross_device_iid(params):
     num_user = params['Trainer']['n_clients']
@@ -133,7 +139,13 @@ def cross_device_iid(params):
             }
         )
         p_train_iid += delta_train_iid
-    return dataset_split, test_dataset
+    for item in dataset_split: item['vocab'] = vocab
+    testset_dict = {
+        'train': None,
+        'test': test_dataset,
+        'vocab': vocab,
+    }
+    return dataset_split, testset_dict
 
 def cross_silo(params):
     num_user = params['Trainer']['n_clients']
@@ -204,4 +216,10 @@ def cross_silo(params):
         )
         p_train_iid += delta_train_iid
         p_train_niid += delta_train_niid
-    return dataset_split, test_dataset
+    for item in dataset_split: item['vocab'] = vocab
+    testset_dict = {
+        'train': None,
+        'test': test_dataset,
+        'vocab': vocab,
+    }
+    return dataset_split, testset_dict

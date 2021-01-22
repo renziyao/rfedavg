@@ -25,10 +25,10 @@ class AvgMeter():
         return self.data[-1]
 
 class BaseClient():
-    def __init__(self, id, params, trainset, testset):
+    def __init__(self, id, params, dataset):
         self.batch_size = params['Trainer']['batch_size']
-        self.trainset = trainset
-        self.testset = testset
+        self.trainset = dataset['train']
+        self.testset = dataset['test']
         self.id = id
         collate_fn = None
         dataset_type = 'Image'
@@ -36,17 +36,17 @@ class BaseClient():
             dataset_type = 'NLP'
         if dataset_type == 'NLP':
             collate_fn = nlp_collate_fn
-        if trainset != None:
+        if self.trainset != None:
             self.trainloader = torch.utils.data.DataLoader(
-                trainset, 
+                self.trainset, 
                 batch_size=self.batch_size, 
                 drop_last=True, 
                 shuffle=True,
                 collate_fn=collate_fn,
             )
-        if testset != None:
+        if self.testset != None:
             self.testloader = torch.utils.data.DataLoader(
-                testset, 
+                self.testset, 
                 batch_size=self.batch_size, 
                 drop_last=False, 
                 shuffle=True,
@@ -57,10 +57,7 @@ class BaseClient():
         models = importlib.import_module('src.models')
         self.model = eval('models.%s' % params['Model']['name'])(params)
         if dataset_type == 'NLP':
-            if trainset != None:
-                self.model.embedding.weight.data.copy_(trainset.vocab.vectors)
-            elif testset != None:
-                self.model.embedding.weight.data.copy_(testset.vocab.vectors)
+            self.model.embedding.weight.data.copy_(dataset['vocab'].vectors)
         self.model = self.model.to(self.device)
     
     def local_train(self):
@@ -104,6 +101,17 @@ class BaseServer():
         self.testset = testset
         self.params = params
         self.acc_meter = AvgMeter()
+        self.center = self.Client(0, params, self.testset)
+        self.clients = []
+        for i in range(self.n_clients):
+            self.clients.append(
+                self.Client(
+                    i + 1, 
+                    params,
+                    self.dataset_split[i],
+                )
+            )
+        self.learning_rate = self.params['Trainer']['optimizer']['lr']
 
     def aggregate_model(self):
         raise NotImplementedError()

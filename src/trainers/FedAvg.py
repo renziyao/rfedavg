@@ -7,8 +7,8 @@ from src.trainers.base import *
 
 
 class Client(BaseClient):
-    def __init__(self, id, params, trainset, testset):
-        super().__init__(id, params, trainset, testset)
+    def __init__(self, id, params, dataset):
+        super().__init__(id, params, dataset)
         self.classifier_criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(
             [
@@ -48,19 +48,8 @@ class Client(BaseClient):
 
 class Server(BaseServer):
     def __init__(self, params):
+        self.Client = Client
         super().__init__(params)
-        self.learning_rate = self.params['Trainer']['optimizer']['lr']
-        self.center = Client(0, params, None, self.testset)
-        self.clients = []
-        for i in range(self.n_clients):
-            self.clients.append(
-                Client(
-                    i + 1, 
-                    params,
-                    self.dataset_split[i]['train'],
-                    self.dataset_split[i]['test'],
-                )
-            )
     
     def aggregate_model(self, clients):
         n = len(clients)
