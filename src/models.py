@@ -105,10 +105,8 @@ class LSTM(BaseModule):
         output_dim = params['Model']['cls_num']
         self.embedding = nn.Embedding(3000, 300, padding_idx = 0)
         self.embedding.weight.requires_grad = False
-        self.encoder = nn.LSTM(input_size=300, hidden_size=512, num_layers=2, batch_first=True)
-        self.fc1 = nn.Linear(512, 256)
-        self.fc2 = nn.Linear(256, 200)
-        self.fc3 = nn.Linear(200, output_dim)
+        self.encoder = nn.LSTM(input_size=300, hidden_size=256, num_layers=2, batch_first=True)
+        self.fc = nn.Linear(256, output_dim)
     
     def last_timestep(self, unpacked, lengths):
         idx = (lengths - 1).view(-1, 1).expand(unpacked.size(0), unpacked.size(2)).unsqueeze(1)
@@ -122,8 +120,6 @@ class LSTM(BaseModule):
         packed_output, (hidden, cell) = self.encoder(packed_embedded)
         output, _ = nn.utils.rnn.pad_packed_sequence(packed_output, batch_first=True)
         output = self.last_timestep(output, length)
-        output = F.relu(self.fc1(output))
-        output = F.relu(self.fc2(output))
-        pred = self.fc3(output)
+        pred = self.fc(output)
         if features: return pred, output
         else: return pred
