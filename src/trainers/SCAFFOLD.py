@@ -70,6 +70,7 @@ class Server(BaseServer):
     def __init__(self, params):
         self.Client = Client
         super().__init__(params)
+        self.c = torch.zeros_like(self.center.model.parameters_to_tensor())
 
     def aggregate_model(self, clients):
         n = len(clients)
