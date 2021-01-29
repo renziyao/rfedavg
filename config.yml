@@ -39,7 +39,12 @@ Trainer:
   # eta_g: 1.0
   #####Trainer Parameters#####
   optimizer:
-    lr: 0.1
-    momentum: 0.0
-    weight_decay: 0.0
+    name: SGD
     lr_decay: 1.0
+    params:
+      lr: 0.1
+      momentum: 0.0
+      weight_decay: 0.0
+      # centered: False
+      # alpha: 0.99
+      # eps: 1e-8
