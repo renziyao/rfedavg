@@ -11,13 +11,9 @@ class Client(BaseClient):
     def __init__(self, id, params, dataset):
         super().__init__(id, params, dataset)
         self.classifier_criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.SGD(
-            [
-                {'params': self.model.parameters()},
-            ], 
-            lr=params['Trainer']['optimizer']['lr'],
-            momentum=params['Trainer']['optimizer']['momentum'],
-            weight_decay=params['Trainer']['optimizer']['weight_decay'],
+        self.optimizer = eval('optim.%s' % params['Trainer']['optimizer']['name'])(
+            self.model.parameters(), 
+            **params['Trainer']['optimizer']['params'],
         )
         self.params = params
         self.meters = {

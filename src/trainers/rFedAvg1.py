@@ -12,13 +12,9 @@ class Client(BaseClient):
         super().__init__(id, params, dataset)
         self.classifier_criterion = nn.CrossEntropyLoss()
         self.mmd_criterion = LinearMMD()
-        self.optimizer = optim.SGD(
-            [
-                {'params': self.model.parameters()},
-            ], 
-            lr=params['Trainer']['optimizer']['lr'],
-            momentum=params['Trainer']['optimizer']['momentum'],
-            weight_decay=params['Trainer']['optimizer']['weight_decay'],
+        self.optimizer = eval('optim.%s' % params['Trainer']['optimizer']['name'])(
+            self.model.parameters(), 
+            **params['Trainer']['optimizer']['params'],
         )
         self.params = params
         self.meters = {
@@ -56,7 +52,6 @@ class Client(BaseClient):
             self.meters['loss'].avg(-batch_count),
             self.test_accuracy(),
         ), flush=True)
-        self.f_s = self.get_features()
 
     def get_features(self):
         inputs, _ = next(iter(self.trainloader))

@@ -1,6 +1,7 @@
 import torch
 import random
 import importlib
+import numpy as np
 from src.trainers.utils import nlp_collate_fn
 
 class AvgMeter():
@@ -82,6 +83,33 @@ class BaseClient():
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
         return correct / total
+    
+    def get_features_and_labels(self, train=True, batch=-1):
+        dataloader = None
+        if train: dataloader = self.trainloader
+        else: dataloader = self.testloader
+        features_batch = []
+        labels_batch = []
+        with torch.no_grad():
+            for i, data in enumerate(dataloader):
+                if i == batch: break
+                inputs, labels = data
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
+                _, f_s = self.model(inputs, features=True)
+                features_batch.append(f_s)
+                labels_batch.append(labels)
+        features = torch.cat(features_batch)
+        labels = torch.cat(labels_batch)
+        return features, labels
+    
+    def save_features_and_labels(self, fn, train=True, batch=-1):
+        features, labels = self.get_features_and_labels(train, batch)
+        features = features.cpu().numpy()
+        labels = labels.cpu().numpy()
+        np.save('%s_features.npy' % fn, features)
+        np.save('%s_labels.npy' % fn, labels)
+        return
 
 class BaseServer():
     def __init__(self, params):
@@ -111,7 +139,7 @@ class BaseServer():
                     self.dataset_split[i],
                 )
             )
-        self.learning_rate = self.params['Trainer']['optimizer']['lr']
+        self.learning_rate = self.params['Trainer']['optimizer']['params']['lr']
 
     def aggregate_model(self):
         raise NotImplementedError()
