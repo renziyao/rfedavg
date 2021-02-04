@@ -1,9 +1,7 @@
-from os import access
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
-import time
 from src.trainers.base import *
 
 
@@ -11,12 +9,9 @@ class Client(BaseClient):
     def __init__(self, id, params, dataset):
         super().__init__(id, params, dataset)
         self.classifier_criterion = nn.CrossEntropyLoss()
-        self.optimizer = eval('optim.%s' % params['Trainer']['optimizer']['name'])(
-            self.model.parameters(), 
-            **params['Trainer']['optimizer']['params'],
-        )
         self.params = params
         self.meters = {
+            'accuracy': AvgMeter(),
             'classifier_loss': AvgMeter(), 
         }
         self.c = None
@@ -26,9 +21,10 @@ class Client(BaseClient):
         self.delta_y = None
     
     def local_train(self):
-        batch_count = 0
+        meters_classifier_loss = AvgMeter()
         x = self.model.parameters_to_tensor().detach().clone()
         eta = self.optimizer.param_groups[0]['lr']
+        batch_count = 0
         for epoch in range(self.E):
             for i, data in enumerate(self.trainloader):
                 self.optimizer.zero_grad()
@@ -45,7 +41,7 @@ class Client(BaseClient):
                 with torch.no_grad():
                     p_tensor = self.model.parameters_to_tensor()
                     p_tensor.add_(eta * (self.c_i - self.c))
-                self.meters['classifier_loss'].append(classifier_loss.item())
+                meters_classifier_loss.append(classifier_loss.item())
                 batch_count += 1
         y = self.model.parameters_to_tensor()
         with torch.no_grad():
@@ -55,18 +51,14 @@ class Client(BaseClient):
             self.c_i = self.c_i_plus
             del self.c
             del self.c_i_plus
-        print('Client %d, classifier_loss: %.5f, acc: %.5f' % (
-            self.id, 
-            self.meters['classifier_loss'].avg(-batch_count),
-            self.test_accuracy(),
-        ), flush=True)
+        self.meters['accuracy'].append(self.test_accuracy())
+        self.meters['classifier_loss'].append(meters_classifier_loss.avg())
 
 
 class Server(BaseServer):
-    def __init__(self, params):
-        self.Client = Client
-        super().__init__(params)
-        self.c = torch.zeros_like(self.center.model.parameters_to_tensor())
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.c = torch.zeros_like(self.model.parameters_to_tensor())
 
     def aggregate_model(self, clients):
         n = len(clients)
@@ -80,8 +72,8 @@ class Server(BaseServer):
                 delta_c.append(client.delta_c)
             delta_x = 1 / n * sum(delta_x)
             delta_c = 1 / n * sum(delta_c)
-            self.center.model.tensor_to_parameters(
-                self.center.model.parameters_to_tensor() + (delta_x * eta_g)
+            self.model.tensor_to_parameters(
+                self.model.parameters_to_tensor() + (delta_x * eta_g)
             )
             self.c.add_(n / N * delta_c)
             for _, client in enumerate(clients):
@@ -90,37 +82,21 @@ class Server(BaseServer):
         return
 
     def train(self):
-        for round in range(1, self.Round + 1):
-            print('%sRound %d begin%s' % ('=' * 10, round, '=' * 10))
+        # random clients
+        clients = self.sample_client()
+        for client in clients:
+            # send params
+            client.clone_model(self)
+            client.c = self.c
+            for p in client.optimizer.param_groups:
+                p['lr'] = self.learning_rate
 
-            time_begin = time.time()
-            # random clients
-            clients = self.sample_client()
-            for client in clients:
-                # send params
-                client.clone_model(self.center)
-                client.c = self.c
-                for p in client.optimizer.param_groups:
-                    p['lr'] = self.learning_rate
+        # for each client in choose_clients
+        for client in clients:
+            # local train
+            client.local_train()
+        
+        # aggregate params
+        self.aggregate_model(clients)
 
-            # for each client in choose_clients
-            for client in clients:
-                # local train
-                client.local_train()
-            
-            # aggregate params
-            self.aggregate_model(clients)
-
-            self.learning_rate *= self.params['Trainer']['optimizer']['lr_decay']
-
-            time_end = time.time()
-
-            if round % self.test_interval == 0:
-                acc = self.center.test_accuracy()
-                print('Summary, Accuracy: %.5f, Time: %.0fs' % (
-                    acc,
-                    time_end - time_begin,
-                ))
-                self.acc_meter.append(acc)
-            print('%sRound %d end%s' % ('=' * 10, round, '=' * 10))
-        print('Done, max acc: %.5f' % (self.acc_meter.max()))
+        self.learning_rate *= self.params['Trainer']['optimizer']['lr_decay']

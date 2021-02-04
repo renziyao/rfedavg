@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import numpy as np
+import random
 
 class LinearMMD(nn.Module):
     def __init__(self):
@@ -26,3 +28,34 @@ def nlp_collate_fn(batch):
     texts = torch.stack(texts)
     inputs = torch.cat([texts, length.view(-1, 1)], dim=1)
     return inputs, torch.stack(labels)
+
+class AvgMeter():
+    def __init__(self):
+        self.data = []
+    
+    def append(self, x, times=1):
+        for _ in range(times):
+            self.data.append(x)
+        return
+
+    def avg(self, p=0):
+        return sum(self.data[p:]) / len(self.data[p:])
+    
+    def min(self, p=0):
+        return min(self.data[p:])
+    
+    def max(self, p=0):
+        return max(self.data[p:])
+    
+    def last(self):
+        try:
+            return self.data[-1]
+        except:
+            return None
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True

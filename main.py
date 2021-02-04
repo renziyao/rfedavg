@@ -1,14 +1,7 @@
-import importlib
-
-from src.utils import *
-
+from src.utils import read_options
+from src.trainers.base import Trainer
 
 if __name__ == '__main__':
     params = read_options()
-    if 'Output' in params: redirect_stdout(params['Output'])
-    print_params(params)
-    set_seed(params['Trainer']['seed'])
-    server = importlib.import_module(
-        'src.trainers.%s' % params['Trainer']['name']
-    ).Server(params)
-    server.train()
+    trainer = Trainer(params)
+    trainer.train()

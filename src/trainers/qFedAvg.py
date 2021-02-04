@@ -16,6 +16,7 @@ class Client(BaseClient):
         )
         self.params = params
         self.meters = {
+            'accuracy': AvgMeter(),
             'classifier_loss': AvgMeter(), 
         }
     
@@ -35,9 +36,9 @@ class Client(BaseClient):
         return loss_meter.avg()
     
     def local_train(self):
+        meters_classifier_loss = AvgMeter()
         omega = self.model.parameters_to_tensor().clone().detach()
         omega_loss = self.calculate_loss()
-        batch_count = 0
         for epoch in range(self.E):
             for i, data in enumerate(self.trainloader):
                 self.optimizer.zero_grad()
@@ -51,70 +52,45 @@ class Client(BaseClient):
                 )
                 classifier_loss.backward()
                 self.optimizer.step()
-                self.meters['classifier_loss'].append(classifier_loss.item())
-                batch_count += 1
+                meters_classifier_loss.append(classifier_loss.item())
         with torch.no_grad():
             L = self.params['Trainer']['L']
             q = self.params['Trainer']['q']
             delta_omega = L * (omega - self.model.parameters_to_tensor())
             self.delta = delta_omega * (omega_loss ** q)
             self.h = q * (omega_loss ** (q - 1)) * (torch.norm(self.delta) ** 2) + L * (omega_loss ** q)
-
-        print('Client %d, classifier_loss: %.5f, acc: %.5f' % (
-            self.id, 
-            self.meters['classifier_loss'].avg(-batch_count),
-            self.test_accuracy(),
-        ), flush=True)
+        self.meters['accuracy'].append(self.test_accuracy())
+        self.meters['classifier_loss'].append(meters_classifier_loss.avg())
 
 class Server(BaseServer):
-    def __init__(self, params):
-        self.Client = Client
-        super().__init__(params)
-    
     def aggregate_model(self, clients):
         n = len(clients)
         with torch.no_grad():
-            omega_old = self.center.model.parameters_to_tensor()
+            omega_old = self.model.parameters_to_tensor()
             numerator = torch.zeros_like(omega_old)
             denominator = 0.0
             for client in clients:
                 numerator += client.delta
                 denominator += client.h
             omega = omega_old - numerator / denominator
-        self.center.model.tensor_to_parameters(omega)
+        self.model.tensor_to_parameters(omega)
         return
 
     def train(self):
-        for round in range(1, self.Round + 1):
-            print('%sRound %d begin%s' % ('=' * 10, round, '=' * 10))
+        # random clients
+        clients = self.sample_client()
 
-            time_begin = time.time()
-            # random clients
-            clients = self.sample_client()
+        for client in clients:
+            # send params
+            client.clone_model(self)
+            for p in client.optimizer.param_groups:
+                p['lr'] = self.learning_rate
+        
+        for client in clients:
+            # local train
+            client.local_train()
+        
+        # aggregate params
+        self.aggregate_model(clients)
 
-            for client in clients:
-                # send params
-                client.clone_model(self.center)
-                for p in client.optimizer.param_groups:
-                    p['lr'] = self.learning_rate
-            
-            for client in clients:
-                # local train
-                client.local_train()
-            
-            # aggregate params
-            self.aggregate_model(clients)
-
-            self.learning_rate *= self.params['Trainer']['optimizer']['lr_decay']
-
-            time_end = time.time()
-
-            if round % self.test_interval == 0:
-                acc = self.center.test_accuracy()
-                print('Summary, Accuracy: %.5f, Time: %.0fs' % (
-                    acc,
-                    time_end - time_begin,
-                ))
-                self.acc_meter.append(acc)
-            print('%sRound %d end%s' % ('=' * 10, round, '=' * 10))
-        print('Done, max acc: %.5f' % (self.acc_meter.max()))
+        self.learning_rate *= self.params['Trainer']['optimizer']['lr_decay']

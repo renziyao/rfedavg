@@ -2,28 +2,13 @@ import torch
 import random
 import importlib
 import numpy as np
-from src.trainers.utils import nlp_collate_fn
+import torch.optim as optim
+import time
+import sys
+import yaml
+from tqdm import tqdm
+from src.trainers.utils import *
 
-class AvgMeter():
-    def __init__(self):
-        self.data = []
-    
-    def append(self, x, times=1):
-        for _ in range(times):
-            self.data.append(x)
-        return
-
-    def avg(self, p=0):
-        return sum(self.data[p:]) / len(self.data[p:])
-    
-    def min(self, p=0):
-        return min(self.data[p:])
-    
-    def max(self, p=0):
-        return max(self.data[p:])
-    
-    def last(self):
-        return self.data[-1]
 
 class BaseClient():
     def __init__(self, id, params, dataset):
@@ -60,6 +45,10 @@ class BaseClient():
         if dataset_type == 'NLP':
             self.model.embedding.weight.data.copy_(dataset['vocab'].vectors)
         self.model = self.model.to(self.device)
+        self.optimizer = eval('optim.%s' % params['Trainer']['optimizer']['name'])(
+            self.model.parameters(), 
+            **params['Trainer']['optimizer']['params'],
+        )
     
     def local_train(self):
         raise NotImplementedError()
@@ -111,40 +100,19 @@ class BaseClient():
         np.save('%s_labels.npy' % fn, labels)
         return
 
-class BaseServer():
-    def __init__(self, params):
-        self.device = torch.device(params['Trainer']['device'])
-        self.Round = params['Trainer']['Round']
-        self.test_interval = params['Trainer']['test_interval']
+class BaseServer(BaseClient):
+    def __init__(self, id, params, dataset):
+        super().__init__(id, params, dataset)
         self.n_clients = params['Trainer']['n_clients']
         self.n_clients_per_round = round(params['Trainer']['C'] * self.n_clients)
-        dataset_name = params['Dataset']['name']
-        func_name = params['Dataset']['divide']
-        dataset_module = importlib.import_module(
-            'src.data.%s' % dataset_name
-        )
-        dataset_func = eval('dataset_module.%s' % func_name)
-        dataset_split, testset = dataset_func(params)
-        self.dataset_split = dataset_split
-        self.testset = testset
+        self.learning_rate = params['Trainer']['optimizer']['params']['lr']
         self.params = params
-        self.acc_meter = AvgMeter()
-        self.center = self.Client(0, params, self.testset)
-        self.clients = []
-        for i in range(self.n_clients):
-            self.clients.append(
-                self.Client(
-                    i + 1, 
-                    params,
-                    self.dataset_split[i],
-                )
-            )
-        self.learning_rate = self.params['Trainer']['optimizer']['params']['lr']
 
     def aggregate_model(self):
         raise NotImplementedError()
 
     def train(self):
+        # finish 1 comm round
         raise NotImplementedError()
 
     def sample_client(self):
@@ -152,3 +120,58 @@ class BaseServer():
             self.clients, 
             self.n_clients_per_round,
         )
+
+class Trainer():
+    def __init__(self, config):
+        # set seed
+        set_seed(config['Trainer']['seed'])
+        # import module
+        trainer_module = importlib.import_module(
+            'src.trainers.%s' % config['Trainer']['name']
+        )
+        dataset_module = importlib.import_module(
+            'src.data.%s' % config['Dataset']['name']
+        )
+        # init meters
+        self.meters = {
+            'accuracy': AvgMeter(),
+            'clients': {},
+        }
+        # get dataset
+        dataset_func = eval('dataset_module.%s' % config['Dataset']['divide'])
+        dataset_split, testset = dataset_func(config)
+        # init clients
+        self.clients = []
+        for i in range(config['Trainer']['n_clients']):
+            id = i + 1
+            client=eval('trainer_module.Client')(
+                       id, 
+                       config,
+                       dataset_split[i],
+                   )
+            self.clients.append(client)
+        # init server
+        self.server = eval('trainer_module.Server')(0, config, testset)
+        self.server.clients = self.clients
+        # save config
+        self.config = config
+    def train(self):
+        output = sys.stdout
+        if 'Output' in self.config: output = open(self.config['Output'], 'a')
+        output.write(yaml.dump(self.config, Dumper=yaml.Dumper))
+        for round in tqdm(range(self.config['Trainer']['Round']), desc='Communication Round', leave=False):
+            output.write('==========Round %d begin==========\n' % round)
+            time_begin = time.time()
+            self.server.train()
+            self.meters['accuracy'].append(self.server.test_accuracy())
+            time_end = time.time()
+            for client in self.clients:
+                client_summary = []
+                client_summary.append('client %d' % client.id)
+                for k, v in client.meters.items():
+                    client_summary.append('%s: %.5f' % (k, v.last()))
+                output.write(', '.join(client_summary) + '\n')
+            output.write('server, accuracy: %.5f\n' % self.meters['accuracy'].last())
+            output.write('total time: %.0f seconds\n' % (time_end - time_begin))
+            output.write('==========Round %d end==========\n' % round)
+            output.flush()
