@@ -165,7 +165,7 @@ class Trainer():
             self.server.train()
             self.meters['accuracy'].append(self.server.test_accuracy())
             time_end = time.time()
-            for client in self.clients:
+            for client in sorted(self.clients, key=lambda x: x.id):
                 client_summary = []
                 client_summary.append('client %d' % client.id)
                 for k, v in client.meters.items():
