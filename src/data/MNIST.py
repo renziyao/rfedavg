@@ -22,7 +22,7 @@ test_dataset = torchvision.datasets.MNIST(
     download=True,
 )
 
-def non_iid_percent(params):
+def niid(params):
     num_user = params['Trainer']['n_clients']
     s = params['Dataset']['s']
     dataset_split = split_dataset_by_percent(train_dataset, test_dataset, s, num_user)

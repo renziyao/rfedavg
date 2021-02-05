@@ -25,7 +25,7 @@ def get_vocab_counter(data, transforms):
             counter[tokens] += 1
     return counter
 
-def cross_device_niid(params):
+def niid_device(params):
     num_user = params['Trainer']['n_clients']
     dataset_user = params['Dataset']['user']
     assert num_user == dataset_user # should be exact same
@@ -83,7 +83,7 @@ def cross_device_niid(params):
     }
     return dataset_split, testset_dict
 
-def cross_device_iid(params):
+def iid_device(params):
     num_user = params['Trainer']['n_clients']
     dataset_user = params['Dataset']['user']
     usernames = list(dict(df[4].value_counts()))[:dataset_user]
@@ -147,7 +147,7 @@ def cross_device_iid(params):
     }
     return dataset_split, testset_dict
 
-def cross_silo(params):
+def niid(params):
     num_user = params['Trainer']['n_clients']
     dataset_frac = params['Dataset']['frac']
     s = params['Dataset']['s']

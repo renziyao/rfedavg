@@ -1,38 +1,29 @@
 # Regularized FedAvg
 
-#### trainer
+### Requirements
 
-FedAvg, FedProx, rFedAvg1, rFedAvg2, SCAFFOLD, qFedAvg
+TorchText requires nightly version
+
+installed through pip
+
+`pip install --pre torch torchtext torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html`
+
+other requirements could be found in requirements.txt
 
 #### dataset
 
-MNIST: 60k, 1x28x28
+MNIST: 1x28x28, automatically downloaded from torchvision
 
-CIFAR10:60k, 3x32x32, resized 3x28x28
+CIFAR10: 3x32x32, resized as 3x28x28, automatically downloaded from torchvision
 
-EMNIST: 814k, 1x28x28
+EMNIST: 1x28x28, automatically downloaded from torchvision
 
-Sent140: 40k
+Sent140: manually download from `https://www.kaggle.com/kazanova/sentiment140/download`
 
-#### divide
+### How to run
 
-non_iid_percent: SCAFFOLD中数据切分方式，s%的数据打乱后切分，1-s%的数据排序后切分
+1. install the requirements
 
-non_iid_shard: on fedavg non iid convergence切分方式，直接排序后切分为shard，每个client分配1个或2个shard
+2. change the parameters in `config.yml`
 
-#### model
-
-FedAvgCNN, LeNet, FedAvg2NN, LogisticRegression, LSTM
-
-参数：input_shape: [c, h, w], cls_num: 最后一层个数
-
-
-数据集下载
-
-https://www.kaggle.com/kazanova/sentiment140/download
-
-torchtext
-
-使用了torchtext试用版的新功能，需要安装nightly版本
-
-`pip install --pre torch torchtext -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html`
+3. python3 main.py

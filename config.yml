@@ -1,46 +1,29 @@
-#Output: './output.txt'
+Output: './output.txt' # The file result is written. If you want to use stdout, just comment this line. 
 
 Dataset:
-  name: MNIST
-  divide: non_iid_percent
-  # Notice: When choosing NLP dataset, type is needed
-  # type: NLP
-  #####Divide Parameters#####
-  # non_iid_percent
-  s: 0.1
-  # cross_device_iid / cross_device_niid
-  # user: 500
-  #####Divide Parameters#####
+  name: MNIST # Dataset name. MNIST EMNIST CIFAR10 Sent140 are supported
+  divide: niid # split function
+  type: CV # Image, NLP
+  s: 0.1 # similarity
+  # user: 500 # use when niid_device, iid_device
 
 Model: 
-  name: FedAvgCNN
+  name: FedAvgCNN # model name. FedAvgCNN FedAvg2NN LogisticRegression LSTM are supported.
   input_shape: [1, 28, 28]
   cls_num: 10
 
 Trainer: 
-  name: FedAvg
+  name: FedAvg # trainer name. FedAvg FedProx qFedAvg rFedAvg1 rFedAvg2 SCAFFOLD are supported
   seed: 0
-  C: 1.0
-  E: 1
-  Round: 300
-  n_clients: 10
-  test_interval: 1
-  device: cpu
+  C: 1.0 # sample rate
+  E: 1 # local training epoch
+  Round: 300 # total communication round
+  n_clients: 10 # clients number
+  device: cpu # cpu/cuda
   batch_size: 100
-  #####Trainer Parameters#####
-  # qfedavg
-  # L: 1.0
-  # q: 0.1
-  # rfedavg
-  # lambda: 0.0001
-  # fedprox
-  # lambda: 0.5
-  # SCAFFOLD
-  # eta_g: 1.0
-  #####Trainer Parameters#####
   optimizer:
-    name: SGD
-    lr_decay: 1.0
+    name: SGD # optimizer name
+    lr_decay: 1.0 # learning rate decay
     params:
       lr: 0.1
       momentum: 0.0
@@ -48,3 +31,17 @@ Trainer:
       # centered: False
       # alpha: 0.99
       # eps: 1e-8
+  #####Trainer Parameters#####
+  # qfedavg
+  # L: 1.0
+  # q: 0.1
+
+  # rfedavg1/rfedavg2
+  # lambda: 0.0001
+
+  # fedprox
+  # lambda: 0.5
+  
+  # SCAFFOLD
+  # eta_g: 1.0
+  #####Trainer Parameters#####
