@@ -8,8 +8,8 @@ def parse_acc(f, args):
     target_acc = []
     stopcode = "Round %d end" % args.round
     for line in lines:
-        if 'Accuracy' in line:
-            acc = float(line[19: 26])
+        if 'server' in line:
+            acc = float(line[18: 25])
             target_acc.append(acc)
         if stopcode in line:
             break

@@ -159,19 +159,31 @@ class Trainer():
         output = sys.stdout
         if 'Output' in self.config: output = open(self.config['Output'], 'a')
         output.write(yaml.dump(self.config, Dumper=yaml.Dumper))
-        for round in tqdm(range(self.config['Trainer']['Round']), desc='Communication Round', leave=False):
-            output.write('==========Round %d begin==========\n' % round)
-            time_begin = time.time()
-            self.server.train()
-            self.meters['accuracy'].append(self.server.test_accuracy())
-            time_end = time.time()
-            for client in sorted(self.clients, key=lambda x: x.id):
-                client_summary = []
-                client_summary.append('client %d' % client.id)
-                for k, v in client.meters.items():
-                    client_summary.append('%s: %.5f' % (k, v.last()))
-                output.write(', '.join(client_summary) + '\n')
-            output.write('server, accuracy: %.5f\n' % self.meters['accuracy'].last())
-            output.write('total time: %.0f seconds\n' % (time_end - time_begin))
-            output.write('==========Round %d end==========\n' % round)
-            output.flush()
+        try:
+            for round in tqdm(range(self.config['Trainer']['Round']), desc='Communication Round', leave=False):
+                output.write('==========Round %d begin==========\n' % round)
+                time_begin = time.time()
+                self.server.train()
+                self.meters['accuracy'].append(self.server.test_accuracy())
+                time_end = time.time()
+                for client in sorted(self.clients, key=lambda x: x.id):
+                    client_summary = []
+                    client_summary.append('client %d' % client.id)
+                    for k, v in client.meters.items():
+                        client_summary.append('%s: %.5f' % (k, v.last()))
+                    output.write(', '.join(client_summary) + '\n')
+                output.write('server, accuracy: %.5f\n' % self.meters['accuracy'].last())
+                output.write('total time: %.0f seconds\n' % (time_end - time_begin))
+                output.write('==========Round %d end==========\n' % round)
+                output.flush()
+        except KeyboardInterrupt:
+            ...
+        finally:
+            acc_lst = self.meters['accuracy'].data
+            acc_avg = np.mean(acc_lst[-5:])
+            acc_std = np.std(acc_lst[-5:])
+            acc_max = np.max(acc_lst)
+            output.write('==========Summary==========\n')
+            output.write('max accuracy: %.5f\n' % acc_max)
+            output.write('final accuracy: %.5f +- %.5f\n' % (acc_avg, acc_std))
+            output.write('===========================\n')
