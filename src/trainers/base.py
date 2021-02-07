@@ -155,6 +155,7 @@ class Trainer():
         self.server.clients = self.clients
         # save config
         self.config = config
+    
     def train(self):
         output = sys.stdout
         if 'Output' in self.config: output = open(self.config['Output'], 'a')
@@ -163,10 +164,10 @@ class Trainer():
             for round in tqdm(range(self.config['Trainer']['Round']), desc='Communication Round', leave=False):
                 output.write('==========Round %d begin==========\n' % round)
                 time_begin = time.time()
-                self.server.train()
+                clients = self.server.train()
                 self.meters['accuracy'].append(self.server.test_accuracy())
                 time_end = time.time()
-                for client in self.clients:
+                for client in sorted(clients, key=lambda x: x.id):
                     client_summary = []
                     client_summary.append('client %d' % client.id)
                     for k, v in client.meters.items():

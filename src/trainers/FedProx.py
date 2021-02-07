@@ -73,3 +73,5 @@ class Server(BaseServer):
         self.aggregate_model(clients)
 
         self.learning_rate *= self.params['Trainer']['optimizer']['lr_decay']
+
+        return clients

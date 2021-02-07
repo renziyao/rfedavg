@@ -3,7 +3,7 @@ Output: './output.txt' # The file result is written. If you want to use stdout, 
 Dataset:
   name: MNIST # Dataset name. MNIST EMNIST CIFAR10 Sent140 are supported
   divide: niid # split function
-  type: CV # Image, NLP
+  type: Image # Image, NLP
   s: 0.1 # similarity
   # user: 500 # use when niid_device, iid_device
 
