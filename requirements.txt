@@ -1,6 +1,6 @@
-torch==1.8.0.dev20210114
-torchtext==0.9.0.dev20210114
-torchvision==0.8.1
-numpy==1.18.5
+torch
+torchtext
+torchvision
+numpy
 pandas
 tqdm
