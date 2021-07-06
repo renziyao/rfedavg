@@ -2,13 +2,7 @@
 
 ### Requirements
 
-TorchText requires nightly version
-
-installed through pip
-
-`pip install --pre torch torchtext torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html`
-
-other requirements could be found in requirements.txt
+`pip install -r requirements.txt`
 
 #### dataset
 
